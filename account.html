@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hajiari - My Account | Loyalty Points</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0a0a0a;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        /* Navbar Styles */
+        .navbar {
+            background: #0a0a0a;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #FFD700;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 2rem;
+            font-family: 'Bebas Neue', cursive;
+            color: #FFD700;
+            text-decoration: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.1rem;
+            transition: color 0.3s;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .nav-links a:hover, .nav-links a.active {
+            color: #FFD700;
+        }
+        
+        .hamburger {
+            display: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #FFD700;
+        }
+        
+        /* Account Container */
+        .account-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .contact-info {
+            background: #111;
+            border-radius: 24px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            border: 1px solid #2a2a2a;
+        }
+        
+        .contact-info h3 {
+            color: #FFD700;
+            font-family: 'Bebas Neue', cursive;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .contact-info p {
+            color: #aaa;
+        }
+        
+        .auth-container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: #111;
+            border-radius: 24px;
+            border: 1px solid #2a2a2a;
+        }
+        
+        .auth-toggle {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .auth-tab {
+            flex: 1;
+            background: #1a1a1a;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 40px;
+            color: white;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .auth-tab.active {
+            background: #FFD700;
+            color: #0a0a0a;
+        }
+        
+        .auth-input {
+            width: 100%;
+            padding: 0.8rem;
+            margin: 0.8rem 0;
+            background: #222;
+            border: 1px solid #444;
+            border-radius: 12px;
+            color: white;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .auth-input:focus {
+            outline: none;
+            border-color: #FFD700;
+        }
+        
+        .btn-yellow {
+            background: #FFD700;
+            color: #0a0a0a;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 40px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            font-size: 1rem;
+            margin-top: 1rem;
+            transition: transform 0.2s;
+        }
+        
+        .btn-yellow:hover {
+            transform: scale(1.02);
+        }
+        
+        .btn-yellow:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .error-msg {
+            color: #ff4444;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+        
+        .success-msg {
+            color: #FFD700;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+        
+        /* Dashboard Styles */
+        .dashboard {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .dashboard-header h2 {
+            color: #FFD700;
+            font-family: 'Bebas Neue', cursive;
+            font-size: 2rem;
+        }
+        
+        .logout-btn {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 40px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            transition: background 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background: #ff4444;
+        }
+        
+        .info-card {
+            background: #111;
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #2a2a2a;
+        }
+        
+        .info-card h3 {
+            color: #FFD700;
+            margin-bottom: 1rem;
+            font-family: 'Bebas Neue', cursive;
+            font-size: 1.3rem;
+            border-bottom: 1px solid #333;
+            padding-bottom: 0.5rem;
+        }
+        
+        .info-card p {
+            margin: 0.5rem 0;
+            color: #ccc;
+        }
+        
+        .points-value {
+            font-size: 3rem;
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        .orders-list {
+            margin-top: 1rem;
+        }
+        
+        .order-item {
+            background: #1a1a1a;
+            padding: 0.8rem;
+            border-radius: 12px;
+            margin-bottom: 0.8rem;
+        }
+        
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 0.5rem;
+        }
+        
+        .order-status {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            background: #FFD700;
+            color: #0a0a0a;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 2rem;
+            background: #000;
+            margin-top: 3rem;
+            color: #666;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hamburger {
+                display: block;
+            }
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: 70px;
+                left: 0;
+                width: 100%;
+                background: #0a0a0a;
+                padding: 1rem;
+                text-align: center;
+                gap: 1rem;
+                border-bottom: 1px solid #FFD700;
+            }
+            .nav-links.active {
+                display: flex;
+            }
+            .account-wrapper {
+                padding: 1rem;
+            }
+            .auth-container {
+                margin: 0 1rem;
+                padding: 1.5rem;
+            }
+            .dashboard-header {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">HAJIARI</div>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="menu.html">Menu</a></li>
+                <li><a href="game.html">Game</a></li>
+                <li><a href="account.html" class="active">Account</a></li>
+            </ul>
+            <div class="hamburger" id="hamburger">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <div class="account-wrapper">
+        <!-- Contact Info Section -->
+        <div class="contact-info">
+            <h3>📍 Hajvery Fast Food - Arifwala</h3>
+            <p>📞 +92 3054557208 | 📧 orders@hajiari.com | 🕒 2PM - 2AM</p>
+            <p style="margin-top: 0.5rem; font-size: 0.85rem;">📍 Main Bazar, Arifwala, Pakistan</p>
+        </div>
+
+        <!-- Auth Container (Login/Register) -->
+        <div id="authContainer" class="auth-container">
+            <div class="auth-toggle">
+                <button id="loginTab" class="auth-tab active" onclick="showLoginTab()">Login</button>
+                <button id="registerTab" class="auth-tab" onclick="showRegisterTab()">Register</button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="loginForm">
+                <input type="email" id="loginEmail" class="auth-input" placeholder="Email Address" autocomplete="email">
+                <input type="password" id="loginPassword" class="auth-input" placeholder="Password" autocomplete="current-password">
+                <div id="loginError" class="error-msg"></div>
+                <button class="btn-yellow" onclick="loginUser()">Login to Account</button>
+            </div>
+
+            <!-- Register Form -->
+            <div id="registerForm" style="display:none;">
+                <input type="text" id="regFullName" class="auth-input" placeholder="Full Name *" autocomplete="name">
+                <input type="tel" id="regPhone" class="auth-input" placeholder="Phone Number * (03XXXXXXXXX)" autocomplete="tel">
+                <input type="email" id="regEmail" class="auth-input" placeholder="Email Address *" autocomplete="email">
+                <input type="text" id="regAddress" class="auth-input" placeholder="Delivery Address *" autocomplete="street-address">
+                <input type="password" id="regPassword" class="auth-input" placeholder="Password * (min 6 chars)" autocomplete="new-password">
+                <input type="password" id="regConfirmPassword" class="auth-input" placeholder="Confirm Password *" autocomplete="off">
+                <div id="registerError" class="error-msg"></div>
+                <div id="registerSuccess" class="success-msg"></div>
+                <button class="btn-yellow" onclick="registerUser()">Create Account</button>
+            </div>
+        </div>
+
+        <!-- Dashboard (shown after login) -->
+        <div id="dashboard" style="display:none;" class="dashboard">
+            <div class="dashboard-header">
+                <h2>Welcome, <span id="userName">Guest</span>!</h2>
+                <button class="logout-btn" onclick="logoutUser()">Logout</button>
+            </div>
+
+            <!-- Profile Card -->
+            <div class="info-card">
+                <h3>👤 My Profile</h3>
+                <p><strong>Email:</strong> <span id="profileEmail">-</span></p>
+                <p><strong>Phone:</strong> <span id="profilePhone">-</span></p>
+                <p><strong>Address:</strong> <span id="profileAddress">-</span></p>
+            </div>
+
+            <!-- Loyalty Points Card -->
+            <div class="info-card">
+                <h3>⭐ Loyalty Points</h3>
+                <div class="points-value" id="pointsTotal">0</div>
+                <p style="margin-top: 0.5rem; font-size: 0.85rem;">Earn points by playing games and redeeming receipt codes!</p>
+            </div>
+
+            <!-- Recent Orders Card -->
+            <div class="info-card">
+                <h3>📦 Recent Orders</h3>
+                <div id="ordersList" class="orders-list">
+                    <p style="color: #aaa;">Loading orders...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2025 Hajiari Fast Food. All rights reserved.</p>
+        <p style="margin-top: 0.5rem; font-size: 0.8rem;">Follow us: Instagram | Facebook | WhatsApp</p>
+    </footer>
+
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <script>
+        // Mobile navigation toggle
+        document.getElementById('hamburger')?.addEventListener('click', () => {
+            document.getElementById('navLinks').classList.toggle('active');
+        });
+
+        // Global functions that might be needed
+        window.showLoginTab = function() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('loginTab').classList.add('active');
+            document.getElementById('registerTab').classList.remove('active');
+            // Clear errors when switching
+            if (document.getElementById('loginError')) document.getElementById('loginError').innerHTML = '';
+            if (document.getElementById('registerError')) document.getElementById('registerError').innerHTML = '';
+        };
+
+        window.showRegisterTab = function() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+            document.getElementById('registerTab').classList.add('active');
+            document.getElementById('loginTab').classList.remove('active');
+            // Clear errors when switching
+            if (document.getElementById('loginError')) document.getElementById('loginError').innerHTML = '';
+            if (document.getElementById('registerError')) document.getElementById('registerError').innerHTML = '';
+        };
+
+        // Override the registerUser function from register.js to add phone validation
+        window.registerUser = async function() {
+            const fullName = document.getElementById('regFullName')?.value.trim();
+            const phone = document.getElementById('regPhone')?.value.trim();
+            const email = document.getElementById('regEmail')?.value.trim();
+            const address = document.getElementById('regAddress')?.value.trim();
+            const password = document.getElementById('regPassword')?.value;
+            const confirmPassword = document.getElementById('regConfirmPassword')?.value;
+            
+            // Clear previous messages
+            const errorDiv = document.getElementById('registerError');
+            const successDiv = document.getElementById('registerSuccess');
+            if (errorDiv) errorDiv.innerHTML = '';
+            if (successDiv) successDiv.innerHTML = '';
+            
+            // Validation
+            if (!fullName || !phone || !email || !address || !password) {
+                if (errorDiv) errorDiv.innerHTML = '❌ Please fill in all fields';
+                return;
+            }
+            
+            // Email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                if (errorDiv) errorDiv.innerHTML = '❌ Please enter a valid email address';
+                return;
+            }
+            
+            // Phone validation (Pakistan format)
+            const phoneRegex = /^03[0-9]{9}$/;
+            if (!phoneRegex.test(phone)) {
+                if (errorDiv) errorDiv.innerHTML = '❌ Please enter a valid phone number (03XXXXXXXXX)';
+                return;
+            }
+            
+            if (password.length < 6) {
+                if (errorDiv) errorDiv.innerHTML = '❌ Password must be at least 6 characters long';
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                if (errorDiv) errorDiv.innerHTML = '❌ Passwords do not match';
+                return;
+            }
+            
+            // Show loading state
+            const registerBtn = document.querySelector('#registerForm .btn-yellow');
+            if (registerBtn) {
+                registerBtn.disabled = true;
+                registerBtn.textContent = 'Creating Account...';
+            }
+            
+            try {
+                const { data, error } = await supabase.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: {
+                            full_name: fullName,
+                            phone: phone,
+                            address: address,
+                            created_at: new Date().toISOString()
+                        }
+                    }
+                });
+                
+                if (error) {
+                    if (errorDiv) errorDiv.innerHTML = `❌ ${error.message}`;
+                    return;
+                }
+                
+                if (data.user) {
+                    if (successDiv) successDiv.innerHTML = '✅ Account created successfully! Please login.';
+                    
+                    // Clear form
+                    if (document.getElementById('regFullName')) document.getElementById('regFullName').value = '';
+                    if (document.getElementById('regPhone')) document.getElementById('regPhone').value = '';
+                    if (document.getElementById('regEmail')) document.getElementById('regEmail').value = '';
+                    if (document.getElementById('regAddress')) document.getElementById('regAddress').value = '';
+                    if (document.getElementById('regPassword')) document.getElementById('regPassword').value = '';
+                    if (document.getElementById('regConfirmPassword')) document.getElementById('regConfirmPassword').value = '';
+                    
+                    // Switch to login tab after 2 seconds
+                    setTimeout(() => {
+                        window.showLoginTab();
+                        if (successDiv) successDiv.innerHTML = '';
+                    }, 2000);
+                }
+            } catch (err) {
+                if (errorDiv) errorDiv.innerHTML = '❌ Network error. Please check your connection.';
+                console.error('Registration error:', err);
+            } finally {
+                if (registerBtn) {
+                    registerBtn.disabled = false;
+                    registerBtn.textContent = 'Create Account';
+                }
+            }
+        };
+
+        // Login function
+        window.loginUser = async function() {
+            const email = document.getElementById('loginEmail')?.value.trim();
+            const password = document.getElementById('loginPassword')?.value;
+            
+            const errorDiv = document.getElementById('loginError');
+            if (errorDiv) errorDiv.innerHTML = '';
+            
+            if (!email || !password) {
+                if (errorDiv) errorDiv.innerHTML = '❌ Please enter email and password';
+                return;
+            }
+            
+            const loginBtn = document.querySelector('#loginForm .btn-yellow');
+            if (loginBtn) {
+                loginBtn.disabled = true;
+                loginBtn.textContent = 'Logging in...';
+            }
+            
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                
+                if (error) {
+                    if (errorDiv) errorDiv.innerHTML = `❌ ${error.message}`;
+                    return;
+                }
+                
+                if (data.user) {
+                    // Hide auth, show dashboard
+                    document.getElementById('authContainer').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
+                    
+                    const metadata = data.user.user_metadata || {};
+                    document.getElementById('userName').innerText = metadata.full_name || data.user.email;
+                    document.getElementById('profileEmail').innerText = data.user.email;
+                    document.getElementById('profilePhone').innerText = metadata.phone || 'Not provided';
+                    document.getElementById('profileAddress').innerText = metadata.address || 'Not provided';
+                    
+                    await loadUserPointsAndOrders(data.user.email);
+                }
+            } catch (err) {
+                if (errorDiv) errorDiv.innerHTML = '❌ Login failed. Please try again.';
+            } finally {
+                if (loginBtn) {
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Login';
+                }
+            }
+        };
+
+        // Load user points and orders
+        async function loadUserPointsAndOrders(email) {
+            try {
+                // Load points
+                const { data: pointsData } = await supabase
+                    .from('points_transactions')
+                    .select('points')
+                    .eq('user_email', email);
+                const totalPoints = pointsData?.reduce((sum, t) => sum + (t.points || 0), 0) || 0;
+                document.getElementById('pointsTotal').innerText = totalPoints;
+                
+                // Load orders
+                const { data: ordersData } = await supabase
+                    .from('orders')
+                    .select('*')
+                    .eq('customer_email', email)
+                    .order('created_at', { ascending: false })
+                    .limit(5);
+                
+                const ordersList = document.getElementById('ordersList');
+                if (!ordersData || ordersData.length === 0) {
+                    ordersList.innerHTML = '<p style="color: #aaa;">No orders yet. Visit our menu!</p>';
+                } else {
+                    ordersList.innerHTML = ordersData.map(order => `
+                        <div class="order-item">
+                            <div class="order-header">
+                                <span><strong>Order #${order.id.slice(0,8)}</strong></span>
+                                <span style="color:#FFD700;">PKR ${order.total_price}</span>
+                            </div>
+                            <div style="font-size: 0.8rem; color: #aaa;">${new Date(order.created_at).toLocaleDateString()}</div>
+                            <div style="margin-top: 0.3rem;"><span class="order-status">${order.status || 'Pending'}</span></div>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                console.error('Error loading data:', err);
+            }
+        }
+
+        // Logout function
+        window.logoutUser = async function() {
+            await supabase.auth.signOut();
+            document.getElementById('authContainer').style.display = 'block';
+            document.getElementById('dashboard').style.display = 'none';
+            if (document.getElementById('loginEmail')) document.getElementById('loginEmail').value = '';
+            if (document.getElementById('loginPassword')) document.getElementById('loginPassword').value = '';
+        };
+
+        // Check existing session
+        async function checkSession() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                document.getElementById('authContainer').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                const metadata = user.user_metadata || {};
+                document.getElementById('userName').innerText = metadata.full_name || user.email;
+                document.getElementById('profileEmail').innerText = user.email;
+                document.getElementById('profilePhone').innerText = metadata.phone || 'Not provided';
+                document.getElementById('profileAddress').innerText = metadata.address || 'Not provided';
+                await loadUserPointsAndOrders(user.email);
+            }
+        }
+
+        // Initialize
+        checkSession();
+    </script>
+   
+</body>
+</html>

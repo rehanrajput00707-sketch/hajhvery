@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Hajiari Admin | Secure Panel + Dual Image Upload</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0a0a0a; font-family: 'Poppins', sans-serif; }
+
+        /* LOGIN SCREEN */
+        .login-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 20% 30%, #0a0a0a, #030303);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 2000;
+        }
+        .login-card {
+            background: #111; border: 2px solid #FFD700; border-radius: 2rem;
+            padding: 2.5rem; width: 90%; max-width: 420px; text-align: center;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.5);
+        }
+        .login-card h1 { color: #FFD700; font-family: 'Bebas Neue', cursive; font-size: 2.8rem; margin-bottom: 0.5rem; }
+        .login-icon { font-size: 3.5rem; color: #FFD700; margin-bottom: 1rem; }
+        .input-field { margin-bottom: 1.5rem; text-align: left; }
+        .input-field label { color: #FFD700; font-size: 0.9rem; display: block; margin-bottom: 0.4rem; }
+        .input-field input { width: 100%; padding: 0.9rem; background: #1e1e1e; border: 1px solid #333; border-radius: 1rem; color: white; font-size: 1rem; }
+        .input-field input:focus { border-color: #FFD700; outline: none; }
+        .login-btn { background: #FFD700; color: #0a0a0a; border: none; width: 100%; padding: 0.9rem; border-radius: 3rem; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.2s; }
+        .login-btn:hover { transform: scale(1.02); }
+        .error-msg { color: #ff5555; font-size: 0.85rem; margin-top: 1rem; }
+
+        /* ADMIN PANEL */
+        .admin-panel { display: none; }
+        .admin-header { background: #0a0a0a; padding: 1rem 2rem; border-bottom: 2px solid #FFD700; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .admin-header h1 { font-family: 'Bebas Neue', cursive; color: #FFD700; font-size: 1.9rem; }
+        .admin-user { display: flex; gap: 1rem; align-items: center; }
+        .logout-btn { background: #222; color: white; border: none; padding: 0.5rem 1.2rem; border-radius: 2rem; cursor: pointer; }
+        .admin-layout { display: flex; min-height: calc(100vh - 80px); }
+        .sidebar { width: 270px; background: #0a0a0a; border-right: 1px solid #FFD700; padding: 2rem 1rem; }
+        .sidebar button { display: flex; align-items: center; gap: 12px; width: 100%; background: #151515; margin: 0.6rem 0; padding: 0.8rem 1rem; border: none; color: white; border-radius: 14px; cursor: pointer; font-size: 1rem; transition: 0.2s; }
+        .sidebar button i { width: 24px; }
+        .sidebar button:hover, .sidebar button.active { background: #FFD700; color: #0a0a0a; }
+        .main-content { flex: 1; padding: 2rem; overflow-x: auto; }
+        .section { display: none; }
+        .section.active { display: block; }
+
+        /* CARDS & TABLES */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: #111; border-left: 5px solid #FFD700; border-radius: 1rem; padding: 1.5rem; }
+        .stat-card .value { font-size: 2rem; font-weight: bold; color: #FFD700; }
+        .admin-table { width: 100%; border-collapse: collapse; background: #111; border-radius: 1rem; overflow: hidden; }
+        .admin-table th, .admin-table td { border: 1px solid #2a2a2a; padding: 0.8rem; text-align: left; }
+        .admin-table th { background: #1a1a1a; color: #FFD700; }
+        .btn-primary { background: #FFD700; color: #0a0a0a; border: none; padding: 0.7rem 1.5rem; border-radius: 2rem; font-weight: bold; cursor: pointer; margin: 0.5rem 0; }
+        .btn-edit { background: #FFD700; color: #000; border: none; padding: 0.3rem 0.8rem; border-radius: 1rem; cursor: pointer; margin-right: 0.5rem; }
+        .btn-danger { background: #dc2626; color: white; border: none; padding: 0.3rem 0.8rem; border-radius: 1rem; cursor: pointer; }
+
+        /* MODAL WITH DUAL UPLOAD */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 1100; justify-content: center; align-items: center; }
+        .modal-card { background: #111; border: 2px solid #FFD700; border-radius: 2rem; padding: 2rem; max-width: 550px; width: 90%; max-height: 90vh; overflow-y: auto; }
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { color: #FFD700; display: block; margin-bottom: 0.4rem; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.7rem; background: #1e1e1e; border: 1px solid #333; border-radius: 0.8rem; color: white; }
+        .image-option-tabs { display: flex; gap: 1rem; margin: 1rem 0; }
+        .image-tab { flex: 1; text-align: center; background: #1e1e1e; padding: 0.5rem; border-radius: 2rem; cursor: pointer; color: #aaa; }
+        .image-tab.active { background: #FFD700; color: #0a0a0a; font-weight: bold; }
+        .image-upload-panel { display: none; margin-top: 0.5rem; }
+        .image-upload-panel.active-panel { display: block; }
+        .preview-box { width: 100px; height: 100px; background: #1e1e1e; border-radius: 1rem; margin-top: 0.5rem; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #FFD700; }
+        .preview-box img { max-width: 100%; max-height: 100%; object-fit: cover; }
+        .progress-bar { background: #333; border-radius: 20px; height: 4px; margin-top: 0.5rem; display: none; }
+        .progress-fill { background: #FFD700; width: 0%; height: 100%; border-radius: 20px; transition: width 0.2s; }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: #FFD700; color: #0a0a0a; padding: 0.8rem 1.5rem; border-radius: 3rem; z-index: 1200; display: none; font-weight: bold; }
+
+        @media (max-width: 768px) {
+            .admin-layout { flex-direction: column; }
+            .sidebar { width: 100%; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+            .sidebar button { width: auto; flex: 1; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN (NO POPUP, FULL INTERFACE) -->
+<div id="loginScreen" class="login-container">
+    <div class="login-card">
+        <div class="login-icon"><i class="fas fa-lock"></i></div>
+        <h1>ADMIN ACCESS</h1>
+        <div class="input-field"><label><i class="fas fa-user"></i> Username</label><input type="text" id="adminUser" placeholder="hajiari_admin"></div>
+        <div class="input-field"><label><i class="fas fa-key"></i> Password</label><input type="password" id="adminPass" placeholder="••••••••"></div>
+        <button class="login-btn" onclick="attemptLogin()"><i class="fas fa-sign-in-alt"></i> Login</button>
+        <div id="loginFeedback" class="error-msg"></div>
+    </div>
+</div>
+
+<!-- MAIN ADMIN PANEL -->
+<div id="adminPanel" class="admin-panel">
+    <div class="admin-header">
+        <h1><i class="fas fa-crown"></i> HAJIARI · ADMIN</h1>
+        <div class="admin-user"><span id="adminNameSpan">Admin</span><button class="logout-btn" onclick="logout()"><i class="fas fa-power-off"></i> Exit</button></div>
+    </div>
+    <div class="admin-layout">
+        <div class="sidebar">
+            <button onclick="switchSection('dashboard')" id="btnDash" class="active"><i class="fas fa-chart-line"></i> Dashboard</button>
+            <button onclick="switchSection('menu')" id="btnMenu"><i class="fas fa-hamburger"></i> Menu Items</button>
+            <button onclick="switchSection('orders')" id="btnOrders"><i class="fas fa-shopping-cart"></i> Orders</button>
+            <button onclick="switchSection('missions')" id="btnMissions"><i class="fas fa-calendar-day"></i> Daily Mission</button>
+            <button onclick="switchSection('codes')" id="btnCodes"><i class="fas fa-receipt"></i> Receipt Codes</button>
+        </div>
+        <div class="main-content">
+            <!-- DASHBOARD -->
+            <div id="dashboardSection" class="section active">
+                <h2>📊 Dashboard</h2>
+                <div class="stats-grid">
+                    <div class="stat-card"><h3>🍽️ Menu Items</h3><div class="value" id="statItems">0</div></div>
+                    <div class="stat-card"><h3>📦 Total Orders</h3><div class="value" id="statOrders">0</div></div>
+                    <div class="stat-card"><h3>💰 Revenue (PKR)</h3><div class="value" id="statRevenue">0</div></div>
+                    <div class="stat-card"><h3>🎮 Game Plays</h3><div class="value" id="statGames">0</div></div>
+                </div>
+            </div>
+
+            <!-- MENU MANAGEMENT -->
+            <div id="menuSection" class="section">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;"><h2>🍔 Menu Catalog</h2><button class="btn-primary" onclick="openItemModal()"><i class="fas fa-plus"></i> Add New Item</button></div>
+                <div style="margin: 1rem 0; display: flex; gap: 0.5rem; flex-wrap: wrap;" id="categoryFilters"></div>
+                <table class="admin-table"><thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Points</th><th>Status</th><th>Actions</th></tr></thead><tbody id="menuTableBody"><tr><td colspan="7">Loading...</td></tr></tbody></table>
+            </div>
+
+            <!-- ORDERS -->
+            <div id="ordersSection" class="section"><h2>📦 Orders</h2><div><label style="color:#FFD700;">Filter by date:</label><input type="date" id="orderFilterDate" onchange="fetchOrders()" style="background:#222; color:white; border:1px solid #FFD700; padding:0.3rem; border-radius:8px; margin-left:1rem;"></div>
+            <table class="admin-table"><thead><tr><th>ID</th><th>Customer</th><th>Phone</th><th>Total</th><th>Status</th><th>Date</th><th>Update</th></tr></thead><tbody id="ordersTableBody"><tr><td colspan="7">No orders</td></tr></tbody></table></div>
+
+            <!-- MISSIONS -->
+            <div id="missionsSection" class="section"><h2>⭐ Daily Mission</h2><div style="background:#111; padding:1.5rem; border-radius:1rem;"><div class="form-group"><label>Title</label><input type="text" id="missionTitle"></div><div class="form-group"><label>Description</label><textarea id="missionDesc" rows="2"></textarea></div><div class="form-group"><label>Reward Points</label><input type="number" id="missionPoints" value="50"></div><div class="form-group"><label>Reward Text</label><input type="text" id="missionRewardText" placeholder="Free Gulab Jamun"></div><div class="form-group"><label>Active Date</label><input type="date" id="missionDate"></div><button class="btn-primary" onclick="saveDailyMission()">Set Mission</button></div></div>
+
+            <!-- RECEIPT CODES -->
+            <div id="codesSection" class="section"><h2>🎟️ Receipt Codes</h2><div style="background:#111; padding:1rem; border-radius:1rem; margin-bottom:1rem;"><div class="form-group"><label>Points Value</label><input type="number" id="newCodePoints" value="20"></div><button class="btn-primary" onclick="generateReceiptCode()"><i class="fas fa-ticket-alt"></i> Generate Code</button></div>
+            <table class="admin-table"><thead><tr><th>Code</th><th>Points</th><th>Used</th><th>Created</th><th>Used By</th></tr></thead><tbody id="codesTableBody"><tr><td colspan="5">Loading...</td></tr></tbody></table></div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL FOR ADD/EDIT ITEM (DUAL IMAGE OPTION) -->
+<div id="itemModal" class="modal">
+    <div class="modal-card">
+        <h3 id="modalTitle">Add / Edit Menu Item</h3>
+        <input type="hidden" id="editId">
+        <!-- DUAL IMAGE OPTION -->
+        <div class="form-group"><label>📸 Product Image</label>
+            <div class="image-option-tabs">
+                <div class="image-tab active" data-option="url" onclick="selectImageOption('url')">🔗 Image URL</div>
+                <div class="image-tab" data-option="local" onclick="selectImageOption('local')">📁 Local Upload</div>
+            </div>
+            <!-- URL Panel -->
+            <div id="urlPanel" class="image-upload-panel active-panel">
+                <input type="text" id="imageUrlInput" placeholder="https://example.com/food.jpg">
+                <div class="preview-box"><img id="urlPreview" src="https://placehold.co/100x100/333/FFD700?text=URL"></div>
+            </div>
+            <!-- Local Upload Panel -->
+            <div id="localPanel" class="image-upload-panel">
+                <input type="file" id="localImageFile" accept="image/*" onchange="previewLocalImage(this)">
+                <div class="preview-box"><img id="localPreview" src="https://placehold.co/100x100/333/FFD700?text=Local"></div>
+                <div class="progress-bar" id="uploadProgressBar"><div class="progress-fill" id="uploadFill"></div></div>
+            </div>
+        </div>
+        <div class="form-group"><label>Item Name *</label><input type="text" id="itemName" placeholder="Crispy Zinger Burger"></div>
+        <div class="form-group"><label>Description</label><textarea id="itemDesc" rows="2" placeholder="Delicious taste..."></textarea></div>
+        <div class="form-group"><label>Price (PKR) *</label><input type="number" id="itemPrice" placeholder="450"></div>
+        <div class="form-group"><label>Category</label><select id="itemCategory"><option>Burgers</option><option>Pizza</option><option>Desserts</option><option>Deals</option><option>Fries</option><option>Drinks</option><option>Other</option></select></div>
+        <div class="form-group"><label>Points Reward</label><input type="number" id="itemPoints" value="10"></div>
+        <div class="form-group"><label><input type="checkbox" id="itemAvailable" checked> Available</label></div>
+        <button class="btn-primary" onclick="saveMenuItemWrapper()">💾 Save Item</button>
+        <button onclick="closeItemModal()" style="background:#333; color:white; border:none; padding:0.5rem 1rem; border-radius:2rem; margin-left:0.5rem;">Cancel</button>
+    </div>
+</div>
+
+<div id="globalToast" class="toast"></div>
+
+<script>
+    // ---------- CREDENTIALS ----------
+    const ADMIN_CRED = { user: "hajiari_admin", pass: "HajiariAdmin2025" };
+    let logged = false;
+    let allMenu = [];
+    let currentImageOption = "url";   // 'url' or 'local'
+    let localFileToUpload = null;
+
+    // Helper: Toast
+    function toast(msg, isErr = false) { let t = document.getElementById('globalToast'); t.innerText = msg; t.style.background = isErr ? '#dc2626' : '#FFD700'; t.style.color = isErr ? 'white' : '#0a0a0a'; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 3000); }
+
+    // ---------- LOGIN ----------
+    window.attemptLogin = function() {
+        let u = document.getElementById('adminUser').value.trim();
+        let p = document.getElementById('adminPass').value;
+        let errDiv = document.getElementById('loginFeedback');
+        if (!u || !p) { errDiv.innerText = '❌ Both fields required'; return; }
+        if (u === ADMIN_CRED.user && p === ADMIN_CRED.pass) {
+            logged = true;
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('adminPanel').style.display = 'block';
+            document.getElementById('adminNameSpan').innerText = u;
+            initStorageBucket();
+            loadAllAdminData();
+        } else { errDiv.innerText = '❌ Invalid credentials'; document.getElementById('adminPass').value = ''; }
+    };
+    window.logout = function() { logged = false; document.getElementById('adminPanel').style.display = 'none'; document.getElementById('loginScreen').style.display = 'flex'; document.getElementById('adminUser').value = ''; document.getElementById('adminPass').value = ''; };
+
+    // ---------- STORAGE SETUP (for local uploads) ----------
+    async function initStorageBucket() {
+        try { let { data: buckets } = await supabase.storage.listBuckets(); if (!buckets?.some(b => b.name === 'menu-images')) { await supabase.storage.createBucket('menu-images', { public: true, allowedMimeTypes: ['image/png','image/jpeg','image/jpg','image/gif'], fileSizeLimit: 2097152 }); } } catch(e) { console.warn(e); }
+    }
+
+    async function uploadLocalImage(file) { if (!file) return null; let ext = file.name.split('.').pop(); let fname = `products/${Date.now()}_${Math.random().toString(36).substring(2,8)}.${ext}`; let progDiv = document.getElementById('uploadProgressBar'); let fill = document.getElementById('uploadFill'); if(progDiv) progDiv.style.display = 'block'; fill.style.width = '30%'; let { error, data } = await supabase.storage.from('menu-images').upload(fname, file); fill.style.width = '100%'; setTimeout(()=>{ if(progDiv) progDiv.style.display = 'none'; fill.style.width = '0%'; }, 800); if(error) { toast('Upload failed: '+error.message, true); return null; } let { data: { publicUrl } } = supabase.storage.from('menu-images').getPublicUrl(fname); return publicUrl; }
+
+    // DUAL IMAGE UI
+    window.selectImageOption = function(opt) { currentImageOption = opt; document.querySelectorAll('.image-tab').forEach(tab => tab.classList.remove('active')); document.querySelector(`.image-tab[data-option="${opt}"]`).classList.add('active'); document.getElementById('urlPanel').classList.toggle('active-panel', opt === 'url'); document.getElementById('localPanel').classList.toggle('active-panel', opt === 'local'); };
+    window.previewLocalImage = function(input) { if(input.files && input.files[0]) { localFileToUpload = input.files[0]; let reader = new FileReader(); reader.onload = e => document.getElementById('localPreview').src = e.target.result; reader.readAsDataURL(input.files[0]); } };
+    function updateUrlPreview() { let url = document.getElementById('imageUrlInput').value; if(url) document.getElementById('urlPreview').src = url; else document.getElementById('urlPreview').src = 'https://placehold.co/100x100/333/FFD700?text=URL'; }
+
+    // ---------- LOAD DATA ----------
+    async function loadAllAdminData() { await loadDashboardStats(); await loadMenuItems(); await fetchOrders(); await loadReceiptCodes(); await loadCurrentMission(); renderCategoryFilters(); }
+    async function loadDashboardStats() { let { data: items } = await supabase.from('menu_items').select('id'); let { data: orders } = await supabase.from('orders').select('total_price'); let { data: games } = await supabase.from('game_scores').select('id'); let revenue = orders?.reduce((s,o)=>s+(o.total_price||0),0)||0; document.getElementById('statItems').innerText = items?.length||0; document.getElementById('statOrders').innerText = orders?.length||0; document.getElementById('statRevenue').innerText = 'PKR '+revenue; document.getElementById('statGames').innerText = games?.length||0; }
+
+    async function loadMenuItems() { let { data, error } = await supabase.from('menu_items').select('*').order('created_at', { ascending: false }); if(!error) { allMenu = data||[]; renderMenuTable(); } else toast('menu error',true); }
+    function renderMenuTable() { let tbody = document.getElementById('menuTableBody'); if(!allMenu.length) { tbody.innerHTML = '<tr><td colspan="7">No items</td></tr>'; return; } tbody.innerHTML = allMenu.map(m => `<tr><td><img src="${m.image_url||'https://placehold.co/50x50/333/FFD700?text=Food'}" width="50" height="50" style="border-radius:8px; object-fit:cover;" onerror="this.src='https://placehold.co/50x50/333/FFD700?text=Food'"></td><td><strong>${escapeHtml(m.name)}</strong><br><small>${escapeHtml(m.description?.substring(0,50)||'')}</small></td><td>${m.category}</td><td>PKR ${m.price}</td><td>🏆 ${m.points_reward}</td><td>${m.is_available ? '✅' : '❌'}</td><td><button class="btn-edit" onclick="openEditItem('${m.id}')">Edit</button> <button class="btn-danger" onclick="deleteItem('${m.id}')">Delete</button></td></tr>`).join(''); }
+    function renderCategoryFilters() { let cats = [...new Set(allMenu.map(i=>i.category))]; let container = document.getElementById('categoryFilters'); if(!container) return; container.innerHTML = `<button onclick="filterMenu('all')" style="background:#FFD700; color:#000; border:none; padding:0.3rem 1rem; border-radius:20px;">All</button>`+cats.map(c=>`<button onclick="filterMenu('${c}')" style="background:#333; color:white; border:none; padding:0.3rem 1rem; border-radius:20px;">${c}</button>`).join(''); }
+    window.filterMenu = function(cat) { if(cat==='all') renderMenuTable(); else { let filtered = allMenu.filter(i=>i.category===cat); let tbody = document.getElementById('menuTableBody'); tbody.innerHTML = filtered.map(m=>`<tr>...</tr>`).join(''); } }; // simplified but we reuse render with filter later.
+
+    // Open modal with dual options
+    window.openItemModal = function() { document.getElementById('editId').value = ''; document.getElementById('itemName').value = ''; document.getElementById('itemDesc').value = ''; document.getElementById('itemPrice').value = ''; document.getElementById('itemCategory').value = 'Burgers'; document.getElementById('itemPoints').value = '10'; document.getElementById('itemAvailable').checked = true; document.getElementById('imageUrlInput').value = ''; document.getElementById('urlPreview').src = 'https://placehold.co/100x100/333/FFD700?text=URL'; document.getElementById('localPreview').src = 'https://placehold.co/100x100/333/FFD700?text=Local'; localFileToUpload = null; selectImageOption('url'); document.getElementById('itemModal').style.display = 'flex'; };
+    window.openEditItem = async function(id) { let item = allMenu.find(i=>i.id===id); if(!item) return; document.getElementById('editId').value = item.id; document.getElementById('itemName').value = item.name; document.getElementById('itemDesc').value = item.description||''; document.getElementById('itemPrice').value = item.price; document.getElementById('itemCategory').value = item.category; document.getElementById('itemPoints').value = item.points_reward; document.getElementById('itemAvailable').checked = item.is_available; let existingImg = item.image_url || ''; document.getElementById('imageUrlInput').value = existingImg; document.getElementById('urlPreview').src = existingImg || 'https://placehold.co/100x100/333/FFD700?text=URL'; document.getElementById('localPreview').src = 'https://placehold.co/100x100/333/FFD700?text=Local'; localFileToUpload = null; selectImageOption(existingImg ? 'url' : 'url'); document.getElementById('itemModal').style.display = 'flex'; };
+    window.saveMenuItemWrapper = async function() { let id = document.getElementById('editId').value; let name = document.getElementById('itemName').value.trim(); let price = parseInt(document.getElementById('itemPrice').value); if(!name || !price) { toast('Name & Price required', true); return; } let finalImageUrl = ''; if(currentImageOption === 'url') { finalImageUrl = document.getElementById('imageUrlInput').value.trim(); } else { if(localFileToUpload) { let uploaded = await uploadLocalImage(localFileToUpload); if(uploaded) finalImageUrl = uploaded; else { toast('Image upload failed', true); return; } } else { finalImageUrl = document.getElementById('imageUrlInput').value.trim(); } } let payload = { name, description: document.getElementById('itemDesc').value, price, category: document.getElementById('itemCategory').value, points_reward: parseInt(document.getElementById('itemPoints').value)||10, is_available: document.getElementById('itemAvailable').checked, image_url: finalImageUrl || null }; let result; if(id) result = await supabase.from('menu_items').update(payload).eq('id', id); else result = await supabase.from('menu_items').insert([payload]); if(result.error) { toast('DB error: '+result.error.message, true); return; } toast(id ? 'Item updated' : 'Item added'); closeItemModal(); await loadMenuItems(); await loadDashboardStats(); renderCategoryFilters(); };
+    window.deleteItem = async function(id) { if(confirm('Delete permanently?')) { let { error } = await supabase.from('menu_items').delete().eq('id', id); if(error) toast(error.message, true); else { toast('Deleted'); await loadMenuItems(); await loadDashboardStats(); renderCategoryFilters(); } } };
+    window.closeItemModal = function() { document.getElementById('itemModal').style.display = 'none'; localFileToUpload = null; };
+
+    // ORDERS
+    window.fetchOrders = async function() { let date = document.getElementById('orderFilterDate').value; let q = supabase.from('orders').select('*').order('created_at',{ascending:false}); if(date) { let start = date+'T00:00:00', end = date+'T23:59:59'; q = q.gte('created_at',start).lte('created_at',end); } let { data } = await q; let tbody = document.getElementById('ordersTableBody'); if(!data || !data.length) { tbody.innerHTML = '<tr><td colspan="7">No orders</td></tr>'; return; } tbody.innerHTML = data.map(o => `<tr><td>${o.id.slice(0,8)}</td><td>${escapeHtml(o.customer_name||'-')}</td><td>${o.customer_phone||'-'}</td><td>PKR ${o.total_price||0}</td><td><select onchange="updateOrderStat('${o.id}',this.value)" style="background:#222;color:white;">${['Pending','Confirmed','Delivered','Cancelled'].map(s=>`<option ${o.status===s?'selected':''}>${s}</option>`).join('')}</select></td><td>${new Date(o.created_at).toLocaleDateString()}</td><td><button class="btn-edit" onclick="toast('Updated')">Save</button></td></tr>`).join(''); };
+    window.updateOrderStat = async function(id, status) { await supabase.from('orders').update({ status }).eq('id', id); toast(`Order ${status}`); fetchOrders(); };
+    // MISSIONS
+    window.saveDailyMission = async function() { let date = document.getElementById('missionDate').value || new Date().toISOString().slice(0,10); let { error } = await supabase.from('daily_missions').upsert({ title: document.getElementById('missionTitle').value, description: document.getElementById('missionDesc').value, reward_points: parseInt(document.getElementById('missionPoints').value), reward_text: document.getElementById('missionRewardText').value, active_date: date }, { onConflict: 'active_date' }); if(error) toast(error.message, true); else toast('Mission saved'); };
+    async function loadCurrentMission() { let today = new Date().toISOString().slice(0,10); let { data } = await supabase.from('daily_missions').select('*').eq('active_date', today).limit(1); if(data && data[0]) { document.getElementById('missionTitle').value = data[0].title||''; document.getElementById('missionDesc').value = data[0].description||''; document.getElementById('missionPoints').value = data[0].reward_points||50; document.getElementById('missionRewardText').value = data[0].reward_text||''; document.getElementById('missionDate').value = data[0].active_date; } }
+    // CODES
+    window.generateReceiptCode = async function() { let points = parseInt(document.getElementById('newCodePoints').value); let code = 'HJ' + Math.random().toString(36).substring(2,8).toUpperCase(); let { error } = await supabase.from('receipt_codes').insert([{ code, points_value: points }]); if(error) toast(error.message, true); else toast(`Code: ${code}`); loadReceiptCodes(); };
+    async function loadReceiptCodes() { let { data } = await supabase.from('receipt_codes').select('*').order('created_at',{ascending:false}); let tbody = document.getElementById('codesTableBody'); if(!data || !data.length) { tbody.innerHTML = '<tr><td colspan="5">No codes</td></tr>'; return; } tbody.innerHTML = data.map(c => `<tr><td><strong>${c.code}</strong></td><td>${c.points_value}</td><td>${c.is_used ? '✅ Used' : '❌ Unused'}</td><td>${new Date(c.created_at).toLocaleDateString()}</td><td>${c.used_by_email||'-'}</td></tr>`).join(''); }
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); }
+    window.switchSection = function(section) { document.querySelectorAll('.section').forEach(s => s.classList.remove('active')); document.getElementById(`${section}Section`).classList.add('active'); document.querySelectorAll('.sidebar button').forEach(btn => btn.classList.remove('active')); if(section==='dashboard') document.getElementById('btnDash').classList.add('active'); if(section==='menu') document.getElementById('btnMenu').classList.add('active'); if(section==='orders') document.getElementById('btnOrders').classList.add('active'); if(section==='missions') document.getElementById('btnMissions').classList.add('active'); if(section==='codes') document.getElementById('btnCodes').classList.add('active'); };
+    document.getElementById('imageUrlInput')?.addEventListener('input', updateUrlPreview);
+</script>
+</body>
+</html>

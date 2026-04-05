@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hajiari - Full Menu | Fast Food Arifwala</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style1.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        /* ===== CART BUTTON (floating) ===== */
+        .cart-fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #FFD700;
+            color: #0a0a0a;
+            border: none;
+            border-radius: 50px;
+            padding: 1rem 1.5rem;
+            font-size: 1rem;
+            font-weight: bold;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            z-index: 500;
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 20px rgba(255,215,0,0.4);
+            transition: transform 0.2s;
+        }
+        .cart-fab:hover { transform: scale(1.05); }
+        .cart-count {
+            background: #0a0a0a;
+            color: #FFD700;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        /* ===== CART MODAL ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.open { display: flex; }
+
+        .cart-modal {
+            background: #111;
+            border: 2px solid #FFD700;
+            border-radius: 24px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .cart-modal h2 {
+            color: #FFD700;
+            font-family: 'Bebas Neue', cursive;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid #222;
+        }
+        .cart-item-name { font-weight: 600; }
+        .cart-item-price { color: #FFD700; font-weight: bold; }
+        .cart-item-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .qty-btn {
+            background: #222;
+            color: white;
+            border: 1px solid #444;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .qty-btn:hover { background: #FFD700; color: #000; }
+        .cart-total {
+            margin-top: 1rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #FFD700;
+            text-align: right;
+        }
+        .checkout-btn {
+            width: 100%;
+            padding: 1rem;
+            background: #FFD700;
+            color: #0a0a0a;
+            border: none;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 1rem;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: transform 0.2s;
+        }
+        .checkout-btn:hover { transform: scale(1.02); }
+        .close-modal-btn {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            margin-top: 0.5rem;
+            width: 100%;
+        }
+
+        /* ===== CHECKOUT MODAL ===== */
+        .checkout-modal {
+            background: #111;
+            border: 2px solid #FFD700;
+            border-radius: 24px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 480px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .checkout-modal h2 {
+            color: #FFD700;
+            font-family: 'Bebas Neue', cursive;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        .checkout-input {
+            width: 100%;
+            padding: 0.8rem;
+            background: #222;
+            border: 1px solid #444;
+            border-radius: 12px;
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            margin-bottom: 1rem;
+        }
+        .checkout-input:focus { outline: none; border-color: #FFD700; }
+        .checkout-label {
+            display: block;
+            color: #FFD700;
+            margin-bottom: 0.3rem;
+            font-size: 0.9rem;
+        }
+        .order-summary-box {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .order-summary-box p { font-size: 0.9rem; color: #ccc; margin: 0.3rem 0; }
+        .order-summary-box .total { color: #FFD700; font-weight: bold; font-size: 1.1rem; }
+        .msg-error { color: #ff4444; font-size: 0.85rem; margin-bottom: 0.5rem; }
+        .msg-success { color: #4caf50; font-size: 0.85rem; margin-bottom: 0.5rem; }
+        .login-required-msg {
+            background: #1a1a1a;
+            border: 1px solid #FFD700;
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .login-required-msg p { color: #ccc; margin-bottom: 0.8rem; }
+        .go-login-btn {
+            background: #FFD700;
+            color: #0a0a0a;
+            border: none;
+            padding: 0.6rem 1.5rem;
+            border-radius: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sticky Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">Hajvery</div>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="menu.html" class="active">Menu</a></li>
+                <li><a href="game.html">Game</a></li>
+                <li><a href="account.html">Contact</a></li>
+                <li><a href="account.html"><i class="fas fa-user-circle"></i> Account</a></li>
+            </ul>
+            <div class="hamburger" id="hamburger">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Menu Header -->
+    <section class="menu-header">
+        <div class="container">
+            <h1>OUR <span class="yellow-text">MENU</span></h1>
+            <p class="subtitle">Fresh ingredients, bold flavors, served fast</p>
+        </div>
+    </section>
+
+    <!-- Category Filters -->
+    <div class="filter-bar" id="filterBar">
+        <button class="filter-btn active" data-category="all">ALL</button>
+        <button class="filter-btn" data-category="Burgers">🍔 BURGERS</button>
+        <button class="filter-btn" data-category="Pizza">🍕 PIZZA</button>
+        <button class="filter-btn" data-category="Deals">🔥 DEALS</button>
+        <button class="filter-btn" data-category="Drinks">🥤 DRINKS</button>
+        <button class="filter-btn" data-category="Fries">🍟 FRIES</button>
+        <button class="filter-btn" data-category="Desserts">🍮 DESSERTS</button>
+        <button class="filter-btn" data-category="Other">⭐ OTHER</button>
+    </div>
+
+    <!-- Menu Grid -->
+    <div class="menu-grid" id="menuGrid">
+        <div class="loading" style="text-align: center; grid-column: 1/-1;">Loading delicious items...</div>
+    </div>
+
+    <!-- Floating Cart Button -->
+    <button class="cart-fab" id="cartFab" onclick="openCartModal()">
+        <i class="fas fa-shopping-cart"></i>
+        <span id="cartFabText">Cart</span>
+        <span class="cart-count" id="cartFabCount">0</span>
+    </button>
+
+    <!-- ===== CART MODAL ===== -->
+    <div class="modal-overlay" id="cartOverlay">
+        <div class="cart-modal">
+            <h2><i class="fas fa-shopping-cart"></i> Your Cart</h2>
+            <div id="cartItemsList"></div>
+            <div class="cart-total" id="cartTotalDisplay"></div>
+            <button class="checkout-btn" onclick="openCheckout()">
+                <i class="fas fa-arrow-right"></i> Proceed to Checkout
+            </button>
+            <button class="close-modal-btn" onclick="closeCartModal()">Close</button>
+        </div>
+    </div>
+
+    <!-- ===== CHECKOUT MODAL ===== -->
+    <div class="modal-overlay" id="checkoutOverlay">
+        <div class="checkout-modal">
+            <h2><i class="fas fa-receipt"></i> Checkout</h2>
+            <div id="checkoutContent"></div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="orderToast" style="position:fixed;bottom:20px;right:20px;background:#FFD700;color:#000;padding:12px 24px;border-radius:50px;display:none;z-index:2000;font-weight:bold;font-family:'Poppins',sans-serif;"></div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">Hajvery</div>
+            <p>© 2025 Hajvery Fast Food. All rights reserved.</p>
+            <div class="social-icons">
+                <i class="fab fa-instagram"></i>
+                <i class="fab fa-facebook"></i>
+                <i class="fab fa-whatsapp"></i>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        let allMenuItems = [];
+        let currentFilter = 'all';
+        let cart = []; // { id, name, price, points, qty }
+        let loggedInUser = null;
+
+        // Mobile nav
+        document.getElementById('hamburger')?.addEventListener('click', () => {
+            document.getElementById('navLinks').classList.toggle('active');
+        });
+
+        // Check if user is logged in
+        async function checkSession() {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                loggedInUser = user || null;
+            } catch(e) {
+                loggedInUser = null;
+            }
+        }
+
+        // Load menu items
+        async function loadMenuItems() {
+            const grid = document.getElementById('menuGrid');
+            grid.innerHTML = '<div class="loading" style="grid-column:1/-1;">Loading menu...</div>';
+            try {
+                const { data, error } = await supabase
+                    .from('menu_items')
+                    .select('*')
+                    .eq('is_available', true)
+                    .order('category', { ascending: true });
+                if (error) throw error;
+                allMenuItems = data || [];
+                renderMenu();
+            } catch (err) {
+                console.error('Error loading menu:', err);
+                grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#aaa;">Failed to load menu.</div>';
+            }
+        }
+
+        function renderMenu() {
+            const grid = document.getElementById('menuGrid');
+            let filtered = allMenuItems;
+            if (currentFilter !== 'all') filtered = allMenuItems.filter(i => i.category === currentFilter);
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#aaa;">No items in this category yet.</div>';
+                return;
+            }
+            grid.innerHTML = filtered.map(item => `
+                <div class="menu-card fade-in">
+                    <div class="points-badge">🏆 ${item.points_reward || 10} pts</div>
+                    <img src="${item.image_url || 'https://placehold.co/400x300/111111/FFD700?text=Hajiari+Food'}" alt="${escapeHtml(item.name)}" onerror="this.src='https://placehold.co/400x300/111111/FFD700?text=Hajiari'">
+                    <h3>${escapeHtml(item.name)}</h3>
+                    <div class="desc">${escapeHtml(item.description?.substring(0,80) || 'Signature taste')}</div>
+                    <div class="price">PKR ${item.price}</div>
+                    <button class="add-order-btn" onclick="addToCart('${item.id}','${escapeHtml(item.name)}',${item.price},${item.points_reward||10})">
+                        <i class="fas fa-cart-plus"></i> Add to cart
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // ===== CART FUNCTIONS =====
+        function addToCart(id, name, price, points) {
+            const existing = cart.find(i => i.id === id);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                cart.push({ id, name, price, points, qty: 1 });
+            }
+            updateCartFab();
+            showToast(`✅ ${name} added!`);
+        }
+
+        function updateCartFab() {
+            const fab = document.getElementById('cartFab');
+            const total = cart.reduce((s, i) => s + i.qty, 0);
+            document.getElementById('cartFabCount').textContent = total;
+            document.getElementById('cartFabText').textContent = 'Cart';
+            fab.style.display = total > 0 ? 'flex' : 'none';
+        }
+
+        function openCartModal() {
+            renderCartItems();
+            document.getElementById('cartOverlay').classList.add('open');
+        }
+
+        function closeCartModal() {
+            document.getElementById('cartOverlay').classList.remove('open');
+        }
+
+        function renderCartItems() {
+            const list = document.getElementById('cartItemsList');
+            if (cart.length === 0) {
+                list.innerHTML = '<p style="color:#aaa;text-align:center;">Cart is empty</p>';
+                document.getElementById('cartTotalDisplay').textContent = '';
+                return;
+            }
+            list.innerHTML = cart.map(item => `
+                <div class="cart-item">
+                    <div>
+                        <div class="cart-item-name">${escapeHtml(item.name)}</div>
+                        <div class="cart-item-price">PKR ${item.price} × ${item.qty}</div>
+                    </div>
+                    <div class="cart-item-controls">
+                        <button class="qty-btn" onclick="changeQty('${item.id}', -1)">−</button>
+                        <span>${item.qty}</span>
+                        <button class="qty-btn" onclick="changeQty('${item.id}', 1)">+</button>
+                    </div>
+                </div>
+            `).join('');
+            const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+            document.getElementById('cartTotalDisplay').textContent = `Total: PKR ${total}`;
+        }
+
+        function changeQty(id, delta) {
+            const item = cart.find(i => i.id === id);
+            if (!item) return;
+            item.qty += delta;
+            if (item.qty <= 0) cart = cart.filter(i => i.id !== id);
+            updateCartFab();
+            renderCartItems();
+        }
+
+        // ===== CHECKOUT =====
+        function openCheckout() {
+            closeCartModal();
+            const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+            const content = document.getElementById('checkoutContent');
+
+            if (!loggedInUser) {
+                // Not logged in — show login prompt
+                content.innerHTML = `
+                    <div class="login-required-msg">
+                        <p>⚠️ You need to login first to place an order.<br>Your cart will be saved.</p>
+                        <button class="go-login-btn" onclick="window.location.href='account.html'">
+                            <i class="fas fa-sign-in-alt"></i> Login / Register
+                        </button>
+                    </div>
+                    <button class="close-modal-btn" onclick="closeCheckout()">Cancel</button>
+                `;
+            } else {
+                // Logged in — show order form with pre-filled data
+                const meta = loggedInUser.user_metadata || {};
+                content.innerHTML = `
+                    <div class="order-summary-box">
+                        <p><strong>Items:</strong> ${cart.map(i => `${i.name} ×${i.qty}`).join(', ')}</p>
+                        <p class="total">Total: PKR ${total}</p>
+                    </div>
+
+                    <label class="checkout-label">Full Name</label>
+                    <input class="checkout-input" id="coName" value="${escapeHtml(meta.full_name || '')}" placeholder="Your name">
+
+                    <label class="checkout-label">Phone Number</label>
+                    <input class="checkout-input" id="coPhone" value="${escapeHtml(meta.phone || '')}" placeholder="03XXXXXXXXX">
+
+                    <label class="checkout-label">Delivery Address</label>
+                    <input class="checkout-input" id="coAddress" value="${escapeHtml(meta.address || '')}" placeholder="Your address">
+
+                    <div id="checkoutMsg"></div>
+
+                    <button class="checkout-btn" onclick="placeOrder()">
+                        <i class="fas fa-check"></i> Place Order
+                    </button>
+                    <button class="close-modal-btn" onclick="closeCheckout()">Cancel</button>
+                `;
+            }
+            document.getElementById('checkoutOverlay').classList.add('open');
+        }
+
+        function closeCheckout() {
+            document.getElementById('checkoutOverlay').classList.remove('open');
+        }
+
+        async function placeOrder() {
+            const name = document.getElementById('coName')?.value.trim();
+            const phone = document.getElementById('coPhone')?.value.trim();
+            const address = document.getElementById('coAddress')?.value.trim();
+            const msgDiv = document.getElementById('checkoutMsg');
+
+            if (!name || !phone || !address) {
+                msgDiv.innerHTML = '<div class="msg-error">❌ Please fill in all fields</div>';
+                return;
+            }
+
+            const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+            const itemsOrdered = cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty }));
+
+            msgDiv.innerHTML = '<div style="color:#FFD700;">Placing order...</div>';
+
+            try {
+                const { error } = await supabase.from('orders').insert([{
+                    customer_name: name,
+                    customer_phone: phone,
+                    customer_email: loggedInUser.email,
+                    customer_address: address,
+                    items_ordered: itemsOrdered,
+                    total_price: total,
+                    status: 'Pending'
+                }]);
+
+                if (error) throw error;
+
+                // Clear cart
+                cart = [];
+                updateCartFab();
+
+                msgDiv.innerHTML = '<div class="msg-success">✅ Order placed successfully!</div>';
+                setTimeout(() => { closeCheckout(); }, 2000);
+                showToast('🎉 Order placed! We will call you soon.');
+
+            } catch(err) {
+                console.error(err);
+                msgDiv.innerHTML = `<div class="msg-error">❌ Error: ${err.message}</div>`;
+            }
+        }
+
+        // ===== FILTERS =====
+        function setupFilters() {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentFilter = btn.getAttribute('data-category');
+                    renderMenu();
+                });
+            });
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('orderToast');
+            toast.textContent = msg;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 2500);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkSession();
+            await loadMenuItems();
+            setupFilters();
+        });
+    </script>
+</body>
+</html>

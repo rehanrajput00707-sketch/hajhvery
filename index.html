@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Hajiari | Fast Food Arifwala</title>
+    <!-- Google Fonts & Styles -->
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <!-- Sticky Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">Hajvery</div>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="index.html" class="active">Home</a></li>
+                <li><a href="menu.html">Menu</a></li>
+                <li><a href="game.html">Game</a></li>
+                <li><a href="account.html">Contact</a></li>
+                <li><a href="account.html"><i class="fas fa-user-circle"></i> Account</a></li>
+            </ul>
+            <div class="hamburger" id="hamburger">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <span class="hero-badge">Fast Food | Arifwala</span>
+                <h1>Taste the <span class="yellow-text">Street</span><br>Fresh & Fast</h1>
+                <p>Fresh. Fast. Flavourful.</p>
+                <a href="menu.html" class="btn-yellow">Order Now <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div class="hero-image">
+                <img src="image.png" alt="Hajiari Street Food">
+            </div>
+        </div>
+    </section>
+
+    <!-- Top Picks (Horizontal scroll) -->
+    <section class="top-picks">
+        <div class="container">
+            <h2 class="section-title">🔥 Top Picks</h2>
+            <div class="scroll-cards" id="topPicksContainer">
+                <!-- dynamically loaded -->
+                <div class="loading">Loading top picks...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact-section" id="contactInfo">
+        <div class="container">
+            <div class="contact-grid">
+                <div class="contact-details">
+                    <h3>📍 Hajvery HQ</h3>
+                    <p><i class="fas fa-map-marker-alt"></i> Main Bazar, Arifwala, Pakistan</p>
+                    <p><i class="fas fa-phone-alt"></i> +92 3054557208</p>
+                    <p><i class="fas fa-envelope"></i> orders@hajiari.com</p>
+                    <p><i class="fas fa-clock"></i> Daily: 2PM – 2AM</p>
+                </div>
+                <div class="map-placeholder">
+                    <iframe src="https://maps.google.com/maps?q=Arifwala,Pakistan&output=embed" width="100%" height="250" style="border:0; border-radius: 12px;" allowfullscreen="" loading="lazy"></iframe>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">HAJIARI</div>
+            <p>© 2025 Hajiari Fast Food. All rights reserved.</p>
+            <div class="social-icons">
+                <i class="fab fa-instagram"></i>
+                <i class="fab fa-facebook"></i>
+                <i class="fab fa-whatsapp"></i>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Global supabase client from supabase-config.js
+        document.addEventListener('DOMContentLoaded', async () => {
+            // load top picks from menu_items (limit 4)
+            await loadTopPicks();
+            // mobile nav toggle
+            const hamburger = document.getElementById('hamburger');
+            const navLinks = document.getElementById('navLinks');
+            if(hamburger) {
+                hamburger.addEventListener('click', () => {
+                    navLinks.classList.toggle('active');
+                });
+            }
+        });
+
+        async function loadTopPicks() {
+            const container = document.getElementById('topPicksContainer');
+            if(!container) return;
+            try {
+                const { data, error } = await supabase
+                    .from('menu_items')
+                    .select('*')
+                    .eq('is_available', true)
+                    .limit(4);
+                if(error) throw error;
+                if(!data || data.length === 0) {
+                    container.innerHTML = '<p>No items available</p>';
+                    return;
+                }
+                container.innerHTML = data.map(item => `
+                    <div class="card">
+                        <img src="${item.image_url || 'https://placehold.co/300x200/111111/FFD700?text=Hajiari'}" alt="${item.name}">
+                        <h3>${escapeHtml(item.name)}</h3>
+                        <p>${escapeHtml(item.description?.substring(0,60) || 'Delicious taste')}</p>
+                        <div class="price">PKR ${item.price}</div>
+                        <button class="order-btn-small" data-name="${escapeHtml(item.name)}" data-price="${item.price}">Order <i class="fas fa-shopping-cart"></i></button>
+                    </div>
+                `).join('');
+                // attach order alert
+                document.querySelectorAll('.order-btn-small').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        alert(`🍔 "${btn.getAttribute('data-name')}" added to cart! (Demo mode)`);
+                    });
+                });
+            } catch(err) {
+                console.error(err);
+                container.innerHTML = '<p>Failed to load menu</p>';
+            }
+        }
+
+        function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+    </script>
+</body>
+</html>
