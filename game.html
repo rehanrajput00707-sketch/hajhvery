@@ -150,16 +150,65 @@
             font-family: 'Bebas Neue', cursive;
             margin: 1rem 0;
         }
-        .btn-disabled {
-            background: #444;
-            cursor: not-allowed;
-            opacity: 0.5;
+        /* Treasure Hunt Section */
+        .treasure-section {
+            background: linear-gradient(135deg, #1a1a1a, #0a0a0a);
+            border: 2px solid #FFD700;
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin: 2rem 0;
         }
-        .no-restart-btn {
-            display: none;
+        .treasure-section h3 {
+            color: #FFD700;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
         }
-
-        /* ✅ MOBILE CANVAS FIX */
+        .treasure-code-input {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .treasure-code-input input {
+            flex: 2;
+            padding: 0.8rem;
+            background: #222;
+            border: 1px solid #FFD700;
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            text-transform: uppercase;
+        }
+        .treasure-code-input button {
+            flex: 1;
+            background: #FFD700;
+            color: #0a0a0a;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .completed-missions-list {
+            list-style: none;
+            margin-top: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .completed-missions-list li {
+            padding: 0.5rem;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .winner-badge {
+            background: #FFD700;
+            color: #0a0a0a;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
         .canvas-wrapper {
             width: 100%;
             overflow: hidden;
@@ -174,7 +223,7 @@
 <body>
     <nav class="navbar">
         <div class="nav-container">
-            <div class="logo">Foodfight</div>
+            <div class="logo">FOODFIGHT</div>
             <ul class="nav-links" id="navLinks">
                 <li><a href="index.html">Home</a></li>
                 <li><a href="menu.html">Menu</a></li>
@@ -243,7 +292,7 @@
             </div>
         </div>
 
-        <!-- Game Over Panel - NO RESTART BUTTON -->
+        <!-- Game Over Panel -->
         <div id="gameOverPanel" style="display:none;" class="game-over-panel">
             <h3>🎮 Game Over!</h3>
             <p>Your Score: <strong id="finalScore">0</strong></p>
@@ -253,14 +302,32 @@
             </div>
         </div>
 
-        <!-- Game Disabled Message (after playing) -->
+        <!-- Game Disabled Message -->
         <div id="gameDisabledMessage" style="display:none;" class="game-disabled-message">
             <i class="fas fa-calendar-check"></i>
             <h3>You've Already Played Today!</h3>
             <p>You can only play <strong>ONE GAME per day</strong>.</p>
             <div class="comeback-timer" id="comebackTimer"></div>
             <p>Check back tomorrow for another chance to catch food and earn points!</p>
-            <p style="margin-top: 1rem;">🎁 <strong>Pro Tip:</strong> Redeem receipt codes below to earn loyalty points!</p>
+        </div>
+
+        <!-- TREASURE HUNT SECTION - Physical codes from restaurant -->
+        <div class="treasure-section" id="treasureSection">
+            <h3><i class="fas fa-treasure-chest"></i> 🔍 TREASURE HUNT</h3>
+            <p style="color:#ccc; margin-bottom: 1rem;">Find hidden treasure codes in our restaurant! Enter code to win discounts and rewards.</p>
+            <div class="treasure-code-input">
+                <input type="text" id="treasureCode" placeholder="Enter Treasure Code (e.g., FOOD123)" maxlength="20">
+                <button id="claimTreasureBtn" onclick="claimTreasureCode()"><i class="fas fa-gem"></i> Claim Reward!</button>
+            </div>
+            <div id="treasureMessage" style="margin-top: 0.8rem; font-size:0.85rem;"></div>
+        </div>
+
+        <!-- Completed Treasure Hunts / Winners List -->
+        <div class="daily-mission" id="completedMissionsSection">
+            <h3>🏆 TREASURE HUNT WINNERS 🏆</h3>
+            <div id="completedMissionsList">
+                <p style="color:#aaa;">Loading winners...</p>
+            </div>
         </div>
 
         <!-- Leaderboard -->
@@ -322,17 +389,15 @@
         let rightPressed = false;
         let touchX = null;
 
-        // ✅ MOBILE CANVAS RESIZE
         function resizeCanvas() {
             const wrapper = document.getElementById('gameWrapper');
-            const w = wrapper.clientWidth;
-            canvas.style.width = w + 'px';
-            canvas.style.height = (w * 500 / 800) + 'px';
+            if(wrapper) {
+                const w = wrapper.clientWidth;
+                canvas.style.width = w + 'px';
+                canvas.style.height = (w * 500 / 800) + 'px';
+            }
         }
         window.addEventListener('resize', resizeCanvas);
-        window.addEventListener('load', resizeCanvas);
-        
-        // ========== AUTHENTICATION FUNCTIONS ==========
         
         async function loadUserPoints(email) {
             if (!email) return 0;
@@ -359,21 +424,105 @@
             const today = new Date().toISOString().split('T')[0];
             const startOfDay = today + 'T00:00:00';
             const endOfDay = today + 'T23:59:59';
-            
             const { data, error } = await supabase
                 .from('game_scores')
                 .select('created_at')
                 .eq('user_email', userEmail)
                 .gte('created_at', startOfDay)
                 .lte('created_at', endOfDay);
-            
             if (error) return false;
             return data.length > 0;
         }
         
+        // ========== TREASURE HUNT FUNCTIONS ==========
+        async function claimTreasureCode() {
+            if (!currentUser) {
+                document.getElementById('treasureMessage').innerHTML = '<span style="color:#ff4444;">❌ Please login first!</span>';
+                return;
+            }
+            
+            const code = document.getElementById('treasureCode').value.trim().toUpperCase();
+            if (!code) {
+                document.getElementById('treasureMessage').innerHTML = '<span style="color:#ff4444;">❌ Please enter a treasure code!</span>';
+                return;
+            }
+            
+            // Check if code exists in treasure_codes table
+            const { data, error } = await supabase
+                .from('treasure_codes')
+                .select('*')
+                .eq('code', code)
+                .single();
+            
+            if (error || !data) {
+                document.getElementById('treasureMessage').innerHTML = '<span style="color:#ff4444;">❌ Invalid treasure code! Find codes hidden in our restaurant!</span>';
+                return;
+            }
+            
+            if (data.is_used) {
+                document.getElementById('treasureMessage').innerHTML = '<span style="color:#ff4444;">❌ This code has already been claimed!</span>';
+                return;
+            }
+            
+            // Mark code as used
+            const { error: updateError } = await supabase
+                .from('treasure_codes')
+                .update({ 
+                    is_used: true, 
+                    used_by: currentUser.email,
+                    used_by_name: currentUser.user_metadata?.full_name || currentUser.email,
+                    used_at: new Date()
+                })
+                .eq('id', data.id);
+            
+            if (updateError) {
+                document.getElementById('treasureMessage').innerHTML = '<span style="color:#ff4444;">❌ Error claiming code. Try again.</span>';
+                return;
+            }
+            
+            // Award points/discount based on treasure value
+            await addPoints(currentUser.email, data.points_value, `Treasure Hunt: ${data.title} - ${code}`);
+            
+            document.getElementById('treasureMessage').innerHTML = `
+                <span style="color:#4caf50;">✅ ${data.title} claimed! +${data.points_value} points awarded!</span><br>
+                <small>${data.reward_description || 'Enjoy your reward!'}</small>
+            `;
+            document.getElementById('treasureCode').value = '';
+            
+            // Reload completed missions list
+            loadCompletedTreasures();
+        }
+        
+        async function loadCompletedTreasures() {
+            const { data, error } = await supabase
+                .from('treasure_codes')
+                .select('*')
+                .eq('is_used', true)
+                .order('used_at', { ascending: false })
+                .limit(20);
+            
+            const container = document.getElementById('completedMissionsList');
+            if (error || !data || data.length === 0) {
+                container.innerHTML = '<p style="color:#aaa;">No treasure hunts completed yet. Find codes in our restaurant!</p>';
+                return;
+            }
+            
+            container.innerHTML = data.map(t => `
+                <li>
+                    <span>
+                        <i class="fas fa-trophy" style="color:#FFD700;"></i>
+                        <strong>${escapeHtml(t.title || 'Treasure Found')}</strong>
+                        <span class="winner-badge">+${t.points_value} pts</span>
+                    </span>
+                    <span style="font-size:0.8rem; color:#aaa;">
+                        ${escapeHtml(t.used_by_name || t.used_by || 'Someone')}
+                    </span>
+                </li>
+            `).join('');
+        }
+        
         async function checkAndUpdateGameAccess() {
             if (!currentUser) return;
-            
             const playedToday = await hasPlayedGameToday(currentUser.email);
             
             if (playedToday) {
@@ -381,39 +530,30 @@
                 document.getElementById('gameArea').style.display = 'none';
                 document.getElementById('gameOverPanel').style.display = 'none';
                 document.getElementById('gameDisabledMessage').style.display = 'block';
-                
                 const tomorrow = new Date();
                 tomorrow.setDate(tomorrow.getDate() + 1);
                 tomorrow.setHours(0, 0, 0, 0);
                 const hoursLeft = Math.ceil((tomorrow - new Date()) / (1000 * 60 * 60));
                 document.getElementById('comebackTimer').innerHTML = `${hoursLeft} hours remaining`;
-                
                 const limitDiv = document.getElementById('limitStatus');
-                limitDiv.innerHTML = '<i class="fas fa-ban" style="color:#FFD700;"></i> <strong>Daily limit reached!</strong> You have already played today. Come back tomorrow!';
+                limitDiv.innerHTML = '<i class="fas fa-ban" style="color:#FFD700;"></i> <strong>Daily limit reached!</strong> Come back tomorrow!';
                 limitDiv.style.background = 'rgba(255, 0, 0, 0.2)';
-                limitDiv.style.borderLeftColor = '#ff4444';
             } else {
                 hasPlayedToday = false;
                 document.getElementById('gameArea').style.display = 'block';
                 document.getElementById('gameDisabledMessage').style.display = 'none';
                 document.getElementById('gameOverPanel').style.display = 'none';
-                
                 const limitDiv = document.getElementById('limitStatus');
-                limitDiv.innerHTML = '<i class="fas fa-check-circle"></i> <strong>Ready to play!</strong> You have ONE game today. Make it count! <span class="daily-limit-badge">1 Play/Day</span>';
+                limitDiv.innerHTML = '<i class="fas fa-check-circle"></i> <strong>Ready to play!</strong> You have ONE game today. <span class="daily-limit-badge">1 Play/Day</span>';
                 limitDiv.style.background = 'rgba(255, 215, 0, 0.15)';
-                limitDiv.style.borderLeftColor = '#FFD700';
-                
                 resizeCanvas();
                 initGame();
                 startSpawning();
             }
         }
         
-        // ========== GAME FUNCTIONS ==========
-        
         function initGame() {
             if (hasPlayedToday) return;
-            
             gameStarted = true;
             score = 0;
             lives = 3;
@@ -442,19 +582,15 @@
         
         function updateGame() {
             if (!gameRunning || hasPlayedToday) return;
-            
             if (leftPressed && basketX > 0) basketX -= 8;
             if (rightPressed && basketX < canvas.width - basketWidth) basketX += 8;
-            
             if (touchX !== null) {
                 let newX = touchX - basketWidth/2;
                 newX = Math.max(0, Math.min(canvas.width - basketWidth, newX));
                 basketX = newX;
             }
-            
             for (let i = 0; i < items.length; i++) {
                 items[i].y += speed;
-                
                 if (items[i].y + items[i].radius > canvas.height - basketHeight &&
                     items[i].x + items[i].radius > basketX &&
                     items[i].x - items[i].radius < basketX + basketWidth) {
@@ -462,7 +598,6 @@
                     score += 10;
                     catchCount++;
                     updateStats();
-                    
                     if (catchCount % 10 === 0 && catchCount > 0) {
                         speed = Math.min(12, speed + 0.8);
                         updateStats();
@@ -470,7 +605,6 @@
                     i--;
                     continue;
                 }
-                
                 if (items[i].y + items[i].radius > canvas.height) {
                     items.splice(i, 1);
                     lives--;
@@ -491,7 +625,6 @@
             ctx.fillRect(basketX, canvas.height - basketHeight, basketWidth, basketHeight);
             ctx.fillStyle = '#0a0a0a';
             ctx.fillRect(basketX + 5, canvas.height - basketHeight - 5, basketWidth - 10, 8);
-            
             for (let item of items) {
                 ctx.font = `${item.radius * 1.8}px "Segoe UI Emoji"`;
                 ctx.fillStyle = '#FFD700';
@@ -519,7 +652,6 @@
             draw();
         }
         
-        // Keyboard controls
         document.addEventListener('keydown', (e) => {
             if (!gameStarted || hasPlayedToday) return;
             if (e.key === 'ArrowLeft') { leftPressed = true; e.preventDefault(); }
@@ -545,113 +677,63 @@
             spawnInterval = setInterval(() => { if (gameRunning && !hasPlayedToday) spawnItem(); }, 800);
         }
         
-        // ========== SAVE SCORE (NO RESTART AFTER) ==========
         async function saveGameScore() {
-            if (!currentUser) {
-                alert('Please login first!');
-                return;
-            }
-            
+            if (!currentUser) { alert('Please login first!'); return; }
             const playedToday = await hasPlayedGameToday(currentUser.email);
-            if (playedToday) {
-                alert('You have already saved a score today! Come back tomorrow.');
-                return;
-            }
-            
-            const { error } = await supabase
-                .from('game_scores')
-                .insert([{ 
-                    player_name: currentUser.user_metadata?.full_name || currentUser.email,
-                    user_email: currentUser.email,
-                    phone: currentUser.user_metadata?.phone || '',
-                    score: currentGameScore,
-                    created_at: new Date().toISOString()
-                }]);
-            
-            if (error) {
-                console.error(error);
-                alert('Failed to save score');
-                return;
-            }
-            
+            if (playedToday) { alert('You have already saved a score today!'); return; }
+            const { error } = await supabase.from('game_scores').insert([{ 
+                player_name: currentUser.user_metadata?.full_name || currentUser.email,
+                user_email: currentUser.email,
+                phone: currentUser.user_metadata?.phone || '',
+                score: currentGameScore,
+                created_at: new Date().toISOString()
+            }]);
+            if (error) { alert('Failed to save score'); return; }
             await addPoints(currentUser.email, 20, 'Played Food Catcher Game');
-            
-            alert(`✅ Score ${currentGameScore} saved! +20 loyalty points awarded!`);
-            
+            alert(`✅ Score ${currentGameScore} saved! +20 points!`);
             hasPlayedToday = true;
             gameRunning = false;
             if (animationId) cancelAnimationFrame(animationId);
             if (spawnInterval) clearInterval(spawnInterval);
-            
             document.getElementById('gameArea').style.display = 'none';
             document.getElementById('gameOverPanel').style.display = 'none';
             document.getElementById('gameDisabledMessage').style.display = 'block';
-            
-            const limitDiv = document.getElementById('limitStatus');
-            limitDiv.innerHTML = '<i class="fas fa-ban" style="color:#FFD700;"></i> <strong>Game completed!</strong> You have used your daily play. Come back tomorrow!';
-            limitDiv.style.background = 'rgba(255, 0, 0, 0.2)';
-            limitDiv.style.borderLeftColor = '#ff4444';
-            
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            tomorrow.setHours(0, 0, 0, 0);
-            const hoursLeft = Math.ceil((tomorrow - new Date()) / (1000 * 60 * 60));
-            document.getElementById('comebackTimer').innerHTML = `${hoursLeft} hours remaining`;
-            
             loadLeaderboard();
         }
         
-        // ========== LEADERBOARD ==========
         async function loadLeaderboard() {
-            const { data, error } = await supabase
-                .from('game_scores')
-                .select('player_name, score')
-                .order('score', { ascending: false })
-                .limit(5);
+            const { data, error } = await supabase.from('game_scores').select('player_name, score').order('score', { ascending: false }).limit(5);
             const listEl = document.getElementById('leaderboardList');
-            if (error || !data || data.length === 0) {
-                listEl.innerHTML = '<li>No scores yet. Be the first!</li>';
-                return;
-            }
-            listEl.innerHTML = data.map((entry, idx) => `
-                <li><span><span class="rank-badge">${idx+1}.</span> ${escapeHtml(entry.player_name)}</span><span>🎯 ${entry.score} pts</span></li>
-            `).join('');
+            if (error || !data || data.length === 0) { listEl.innerHTML = '<li>No scores yet</li>'; return; }
+            listEl.innerHTML = data.map((entry, idx) => `<li><span><span class="rank-badge">${idx+1}.</span> ${escapeHtml(entry.player_name)}</span><span>🎯 ${entry.score} pts</span></li>`).join('');
         }
         
-        // ========== DAILY MISSION ==========
         async function loadDailyMission() {
             const today = new Date().toISOString().split('T')[0];
-            const { data, error } = await supabase
-                .from('daily_missions')
-                .select('*')
-                .eq('active_date', today)
-                .limit(1);
+            const { data, error } = await supabase.from('daily_missions').select('*').eq('active_date', today).limit(1);
             const missionDiv = document.getElementById('dailyMissionContent');
             if (error || !data || data.length === 0) {
-                missionDiv.innerHTML = '<p>🎯 Catch 20 foods today to earn 50 bonus points!</p><small>+ Free Fries reward</small>';
+                missionDiv.innerHTML = '<p>🎯 Find treasure codes in our restaurant to earn rewards!</p>';
                 return;
             }
             const mission = data[0];
             missionDiv.innerHTML = `<p><strong>${escapeHtml(mission.title)}</strong><br>${escapeHtml(mission.description)}<br><span class="yellow-text">Reward: ${mission.reward_points} pts + ${mission.reward_text || 'Bonus'}</span></p>`;
         }
         
-        // ========== RECEIPT REDEMPTION ==========
         async function redeemReceiptCode(code) {
-            if (!code) { document.getElementById('redeemMessage').innerHTML = '<span style="color:red;">Please enter a code</span>'; return; }
+            if (!code) { document.getElementById('redeemMessage').innerHTML = '<span style="color:red;">Enter a code</span>'; return; }
             const { data, error } = await supabase.from('receipt_codes').select('*').eq('code', code.toUpperCase()).single();
             if (error || !data) { document.getElementById('redeemMessage').innerHTML = '<span style="color:red;">Invalid code</span>'; return; }
             if (data.is_used) { document.getElementById('redeemMessage').innerHTML = '<span style="color:red;">Code already used</span>'; return; }
-            
             await supabase.from('receipt_codes').update({ is_used: true, used_at: new Date(), used_by_email: currentUser?.email }).eq('id', data.id);
             if (currentUser) await addPoints(currentUser.email, data.points_value, `Redeemed receipt code ${code}`);
-            alert(`✅ Code redeemed! You earned ${data.points_value} loyalty points!`);
-            document.getElementById('redeemMessage').innerHTML = `<span style="color:#FFD700;">+${data.points_value} points awarded!</span>`;
+            alert(`✅ +${data.points_value} points!`);
+            document.getElementById('redeemMessage').innerHTML = `<span style="color:#FFD700;">+${data.points_value} points!</span>`;
             document.getElementById('receiptCode').value = '';
         }
         
-        function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){ return m==='&'?'&amp;':m==='<'?'&lt;':'&gt;';}); }
+        function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
         
-        // ========== AUTH UI ==========
         function showSignup() {
             document.getElementById('loginForm').style.display = 'none';
             document.getElementById('signupForm').style.display = 'block';
@@ -666,16 +748,9 @@
             const phone = document.getElementById('signupPhone').value.trim();
             const email = document.getElementById('signupEmail').value.trim();
             const password = document.getElementById('signupPassword').value;
-            
             if (!name || !phone || !email || !password) { alert('Please fill all fields'); return; }
             if (password.length < 6) { alert('Password must be at least 6 characters'); return; }
-            
-            const { data, error } = await supabase.auth.signUp({
-                email: email,
-                password: password,
-                options: { data: { full_name: name, phone: phone } }
-            });
-            
+            const { error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name, phone: phone } } });
             if (error) { alert('Signup error: ' + error.message); return; }
             alert('Account created! Please login.');
             showLogin();
@@ -684,18 +759,16 @@
         async function handleLogin() {
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
-            
             const { data, error } = await supabase.auth.signInWithPassword({ email, password });
             if (error) { alert('Login error: ' + error.message); return; }
-            
             currentUser = data.user;
             document.getElementById('authModal').style.display = 'none';
             document.getElementById('gameContainer').style.display = 'block';
             document.getElementById('userInfoBar').style.display = 'flex';
             document.getElementById('userName').innerText = currentUser.user_metadata?.full_name || currentUser.email;
-            
             await loadUserPoints(currentUser.email);
             await checkAndUpdateGameAccess();
+            loadCompletedTreasures();
         }
         
         async function handleLogout() {
@@ -720,6 +793,7 @@
                 document.getElementById('userName').innerText = user.user_metadata?.full_name || user.email;
                 await loadUserPoints(user.email);
                 await checkAndUpdateGameAccess();
+                loadCompletedTreasures();
             } else {
                 document.getElementById('authModal').style.display = 'flex';
                 document.getElementById('gameContainer').style.display = 'none';
@@ -728,13 +802,13 @@
             loadDailyMission();
         }
         
-        // Event listeners
         document.getElementById('doSignupBtn')?.addEventListener('click', handleSignup);
         document.getElementById('doLoginBtn')?.addEventListener('click', handleLogin);
         document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
         document.getElementById('saveScoreBtn')?.addEventListener('click', saveGameScore);
         document.getElementById('redeemReceiptBtn')?.addEventListener('click', () => redeemReceiptCode(document.getElementById('receiptCode').value.trim()));
         document.getElementById('hamburger')?.addEventListener('click', () => document.getElementById('navLinks').classList.toggle('active'));
+        window.claimTreasureCode = claimTreasureCode;
         
         window.addEventListener('load', checkSession);
     </script>

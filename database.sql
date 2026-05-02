@@ -134,3 +134,35 @@ ON CONFLICT DO NOTHING;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS original_price integer;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_amount integer DEFAULT 0;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS points_used integer DEFAULT 0;
+
+-- Treasure codes table (physical codes hidden in restaurant)
+CREATE TABLE IF NOT EXISTS treasure_codes (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    code text UNIQUE NOT NULL,
+    title text DEFAULT 'Treasure Found',
+    points_value integer DEFAULT 50,
+    reward_description text,
+    is_used boolean DEFAULT false,
+    used_by text,
+    used_by_name text,
+    used_at timestamptz,
+    created_at timestamptz DEFAULT now()
+);
+
+-- Sample treasure codes to hide in restaurant
+INSERT INTO treasure_codes (code, title, points_value, reward_description) VALUES
+('FOOD123', 'Golden Burger Treasure', 100, '100 Points + Free Drink'),
+('FIGHT456', 'Secret Fry Stash', 75, '75 Points + Free Fries'),
+('ARIF789', 'Arifwala Special', 150, '150 Points + 10% Off'),
+('HIDDEN001', 'Hidden Gem', 200, '200 Points + Free Gulab Jamun'),
+('TREASURE02', 'Mystery Box', 50, '50 Points');
+
+-- Update orders table for discount tracking
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS treasure_code_used text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS treasure_discount integer DEFAULT 0;
+
+-- Generate random treasure codes
+INSERT INTO treasure_codes (code, title, points_value, reward_description)
+VALUES 
+('RANDOM' || floor(random()*10000), 'Weekend Special', 80, 'Free Upgrade'),
+('HUNT' || floor(random()*9999), 'Late Night Deal', 120, '20% Off Next Order');
