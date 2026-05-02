@@ -158,6 +158,17 @@
         .no-restart-btn {
             display: none;
         }
+
+        /* ✅ MOBILE CANVAS FIX */
+        .canvas-wrapper {
+            width: 100%;
+            overflow: hidden;
+        }
+        #gameCanvas {
+            display: block;
+            width: 100% !important;
+            height: auto !important;
+        }
     </style>
 </head>
 <body>
@@ -310,6 +321,16 @@
         let leftPressed = false;
         let rightPressed = false;
         let touchX = null;
+
+        // ✅ MOBILE CANVAS RESIZE
+        function resizeCanvas() {
+            const wrapper = document.getElementById('gameWrapper');
+            const w = wrapper.clientWidth;
+            canvas.style.width = w + 'px';
+            canvas.style.height = (w * 500 / 800) + 'px';
+        }
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('load', resizeCanvas);
         
         // ========== AUTHENTICATION FUNCTIONS ==========
         
@@ -361,7 +382,6 @@
                 document.getElementById('gameOverPanel').style.display = 'none';
                 document.getElementById('gameDisabledMessage').style.display = 'block';
                 
-                // Show when they can play again (tomorrow)
                 const tomorrow = new Date();
                 tomorrow.setDate(tomorrow.getDate() + 1);
                 tomorrow.setHours(0, 0, 0, 0);
@@ -383,7 +403,7 @@
                 limitDiv.style.background = 'rgba(255, 215, 0, 0.15)';
                 limitDiv.style.borderLeftColor = '#FFD700';
                 
-                // Start fresh game
+                resizeCanvas();
                 initGame();
                 startSpawning();
             }
@@ -558,24 +578,20 @@
             
             alert(`✅ Score ${currentGameScore} saved! +20 loyalty points awarded!`);
             
-            // Disable game completely after saving
             hasPlayedToday = true;
             gameRunning = false;
             if (animationId) cancelAnimationFrame(animationId);
             if (spawnInterval) clearInterval(spawnInterval);
             
-            // Hide game area, show disabled message
             document.getElementById('gameArea').style.display = 'none';
             document.getElementById('gameOverPanel').style.display = 'none';
             document.getElementById('gameDisabledMessage').style.display = 'block';
             
-            // Update limit status
             const limitDiv = document.getElementById('limitStatus');
             limitDiv.innerHTML = '<i class="fas fa-ban" style="color:#FFD700;"></i> <strong>Game completed!</strong> You have used your daily play. Come back tomorrow!';
             limitDiv.style.background = 'rgba(255, 0, 0, 0.2)';
             limitDiv.style.borderLeftColor = '#ff4444';
             
-            // Show comeback timer
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
             tomorrow.setHours(0, 0, 0, 0);
