@@ -149,17 +149,19 @@ CREATE TABLE IF NOT EXISTS treasure_codes (
     created_at timestamptz DEFAULT now()
 );
 
--- Sample treasure codes to hide in restaurant
-INSERT INTO treasure_codes (code, title, points_value, reward_description) VALUES
-('FOOD123', 'Golden Burger Treasure', 100, '100 Points + Free Drink'),
-('FIGHT456', 'Secret Fry Stash', 75, '75 Points + Free Fries'),
-('ARIF789', 'Arifwala Special', 150, '150 Points + 10% Off'),
-('HIDDEN001', 'Hidden Gem', 200, '200 Points + Free Gulab Jamun'),
-('TREASURE02', 'Mystery Box', 50, '50 Points');
+-- Track who redeemed codes (winners)
+CREATE TABLE IF NOT EXISTS treasure_redemptions (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    code text NOT NULL,
+    user_email text NOT NULL,
+    user_name text,
+    points_earned integer,
+    redeemed_date date,
+    redeemed_at timestamptz DEFAULT now()
+);
 
--- Update orders table for discount tracking
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS treasure_code_used text;
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS treasure_discount integer DEFAULT 0;
+-- Also ensure receipt_codes table has these columns
+ALTER TABLE receipt_codes ADD COLUMN IF NOT EXISTS used_by_email text;
 
 -- Generate random treasure codes
 INSERT INTO treasure_codes (code, title, points_value, reward_description)
