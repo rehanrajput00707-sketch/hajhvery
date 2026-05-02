@@ -11,54 +11,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
     <style>
-        /* ===== CART BUTTON (floating) ===== */
-        .cart-fab {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: #FFD700;
-            color: #0a0a0a;
-            border: none;
-            border-radius: 50px;
-            padding: 1rem 1.5rem;
-            font-size: 1rem;
-            font-weight: bold;
-            font-family: 'Poppins', sans-serif;
-            cursor: pointer;
-            z-index: 500;
-            display: none;
-            align-items: center;
-            gap: 0.5rem;
-            box-shadow: 0 4px 20px rgba(255,215,0,0.4);
-            transition: transform 0.2s;
-        }
-        .cart-fab:hover { transform: scale(1.05); }
-        .cart-count {
-            background: #0a0a0a;
-            color: #FFD700;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.8rem;
-        }
-
-        /* ===== CART MODAL ===== */
+        /* ===== ORDER MODAL ===== */
         .modal-overlay {
             display: none;
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             z-index: 1000;
             justify-content: center;
             align-items: center;
         }
         .modal-overlay.open { display: flex; }
 
-        .cart-modal {
+        .order-modal {
             background: #111;
             border: 2px solid #FFD700;
             border-radius: 24px;
@@ -68,89 +34,18 @@
             max-height: 85vh;
             overflow-y: auto;
         }
-        .cart-modal h2 {
+        .order-modal h2 {
             color: #FFD700;
             font-family: 'Bebas Neue', cursive;
             font-size: 2rem;
             margin-bottom: 1.5rem;
         }
-        .cart-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.8rem 0;
-            border-bottom: 1px solid #222;
-        }
-        .cart-item-name { font-weight: 600; }
-        .cart-item-price { color: #FFD700; font-weight: bold; }
-        .cart-item-controls {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .qty-btn {
-            background: #222;
-            color: white;
-            border: 1px solid #444;
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-        .qty-btn:hover { background: #FFD700; color: #000; }
-        .cart-total {
-            margin-top: 1rem;
-            font-size: 1.2rem;
-            font-weight: bold;
+        .order-modal h3 {
             color: #FFD700;
-            text-align: right;
-        }
-        .checkout-btn {
-            width: 100%;
-            padding: 1rem;
-            background: #FFD700;
-            color: #0a0a0a;
-            border: none;
-            border-radius: 40px;
-            font-weight: bold;
-            font-size: 1rem;
-            font-family: 'Poppins', sans-serif;
-            cursor: pointer;
-            margin-top: 1rem;
-            transition: transform 0.2s;
-        }
-        .checkout-btn:hover { transform: scale(1.02); }
-        .close-modal-btn {
-            background: #333;
-            color: white;
-            border: none;
-            padding: 0.5rem 1.2rem;
-            border-radius: 40px;
-            cursor: pointer;
-            font-family: 'Poppins', sans-serif;
-            margin-top: 0.5rem;
-            width: 100%;
-        }
-
-        /* ===== CHECKOUT MODAL ===== */
-        .checkout-modal {
-            background: #111;
-            border: 2px solid #FFD700;
-            border-radius: 24px;
-            padding: 2rem;
-            width: 90%;
-            max-width: 480px;
-            max-height: 85vh;
-            overflow-y: auto;
-        }
-        .checkout-modal h2 {
-            color: #FFD700;
-            font-family: 'Bebas Neue', cursive;
-            font-size: 2rem;
+            font-size: 1.3rem;
             margin-bottom: 1rem;
         }
-        .checkout-input {
+        .order-input {
             width: 100%;
             padding: 0.8rem;
             background: #222;
@@ -160,8 +55,8 @@
             font-family: 'Poppins', sans-serif;
             margin-bottom: 1rem;
         }
-        .checkout-input:focus { outline: none; border-color: #FFD700; }
-        .checkout-label {
+        .order-input:focus { outline: none; border-color: #FFD700; }
+        .order-label {
             display: block;
             color: #FFD700;
             margin-bottom: 0.3rem;
@@ -195,6 +90,88 @@
             font-weight: bold;
             cursor: pointer;
             font-family: 'Poppins', sans-serif;
+        }
+        .close-modal-btn {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            margin-top: 0.5rem;
+            width: 100%;
+        }
+        .order-now-btn {
+            background: #FFD700;
+            color: #0a0a0a;
+            border: none;
+            padding: 0.8rem 1.2rem;
+            border-radius: 40px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 1rem;
+        }
+        .size-selector {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .size-option {
+            flex: 1;
+            background: #222;
+            border: 1px solid #444;
+            border-radius: 12px;
+            padding: 0.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .size-option.selected {
+            background: #FFD700;
+            color: #0a0a0a;
+            border-color: #FFD700;
+        }
+        .size-option:hover {
+            background: #FFD700;
+            color: #0a0a0a;
+        }
+        .size-name {
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        .size-price {
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+        .size-option.selected .size-price {
+            color: #0a0a0a;
+        }
+        .item-detail {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .item-detail img {
+            width: 70px;
+            height: 70px;
+            border-radius: 12px;
+            object-fit: cover;
+        }
+        .item-detail-info h4 {
+            color: #FFD700;
+            margin-bottom: 0.3rem;
+        }
+        .item-detail-info p {
+            color: #aaa;
+            font-size: 0.8rem;
         }
     </style>
 </head>
@@ -241,31 +218,11 @@
         <div class="loading" style="text-align: center; grid-column: 1/-1;">Loading delicious items...</div>
     </div>
 
-    <!-- Floating Cart Button -->
-    <button class="cart-fab" id="cartFab" onclick="openCartModal()">
-        <i class="fas fa-shopping-cart"></i>
-        <span id="cartFabText">Cart</span>
-        <span class="cart-count" id="cartFabCount">0</span>
-    </button>
-
-    <!-- ===== CART MODAL ===== -->
-    <div class="modal-overlay" id="cartOverlay">
-        <div class="cart-modal">
-            <h2><i class="fas fa-shopping-cart"></i> Your Cart</h2>
-            <div id="cartItemsList"></div>
-            <div class="cart-total" id="cartTotalDisplay"></div>
-            <button class="checkout-btn" onclick="openCheckout()">
-                <i class="fas fa-arrow-right"></i> Proceed to Checkout
-            </button>
-            <button class="close-modal-btn" onclick="closeCartModal()">Close</button>
-        </div>
-    </div>
-
-    <!-- ===== CHECKOUT MODAL ===== -->
-    <div class="modal-overlay" id="checkoutOverlay">
-        <div class="checkout-modal">
-            <h2><i class="fas fa-receipt"></i> Checkout</h2>
-            <div id="checkoutContent"></div>
+    <!-- ===== ORDER MODAL ===== -->
+    <div class="modal-overlay" id="orderOverlay">
+        <div class="order-modal">
+            <h2><i class="fas fa-receipt"></i> Place Order</h2>
+            <div id="orderContent"></div>
         </div>
     </div>
 
@@ -287,8 +244,20 @@
     <script>
         let allMenuItems = [];
         let currentFilter = 'all';
-        let cart = []; // { id, name, price, points, qty }
         let loggedInUser = null;
+        let selectedItem = null;
+        let selectedSize = null;
+
+        // Pizza size options with price multipliers
+        const pizzaSizes = {
+            'Small': { multiplier: 0.7, label: 'Small (6")' },
+            'Medium': { multiplier: 1.0, label: 'Medium (9")' },
+            'Large': { multiplier: 1.4, label: 'Large (12")' },
+            'Extra Large': { multiplier: 1.8, label: 'Extra Large (14")' }
+        };
+
+        // Default size for non-pizza items
+        const defaultSize = { multiplier: 1.0, label: 'Regular' };
 
         // Mobile nav
         document.getElementById('hamburger')?.addEventListener('click', () => {
@@ -335,142 +304,151 @@
             grid.innerHTML = filtered.map(item => `
                 <div class="menu-card fade-in">
                     <div class="points-badge">🏆 ${item.points_reward || 10} pts</div>
-                    <img src="${item.image_url || 'https://placehold.co/400x300/111111/FFD700?text=Hajiari+Food'}" alt="${escapeHtml(item.name)}" onerror="this.src='https://placehold.co/400x300/111111/FFD700?text=Hajiari'">
+                    <img src="${item.image_url || 'https://placehold.co/400x300/111111/FFD700?text=Foodfight'}" alt="${escapeHtml(item.name)}" onerror="this.src='https://placehold.co/400x300/111111/FFD700?text=Foodfight'">
                     <h3>${escapeHtml(item.name)}</h3>
                     <div class="desc">${escapeHtml(item.description?.substring(0,80) || 'Signature taste')}</div>
-                    <div class="price">PKR ${item.price}</div>
-                    <button class="add-order-btn" onclick="addToCart('${item.id}','${escapeHtml(item.name)}',${item.price},${item.points_reward||10})">
-                        <i class="fas fa-cart-plus"></i> Add to cart
+                    <div class="price" id="price-${item.id}">PKR ${item.price}</div>
+                    <button class="add-order-btn" onclick="openOrderModal('${item.id}')">
+                        <i class="fas fa-shopping-cart"></i> Order Now
                     </button>
                 </div>
             `).join('');
         }
 
-        // ===== CART FUNCTIONS =====
-        function addToCart(id, name, price, points) {
-            const existing = cart.find(i => i.id === id);
-            if (existing) {
-                existing.qty += 1;
-            } else {
-                cart.push({ id, name, price, points, qty: 1 });
-            }
-            updateCartFab();
-            showToast(`✅ ${name} added!`);
-        }
-
-        function updateCartFab() {
-            const fab = document.getElementById('cartFab');
-            const total = cart.reduce((s, i) => s + i.qty, 0);
-            document.getElementById('cartFabCount').textContent = total;
-            document.getElementById('cartFabText').textContent = 'Cart';
-            fab.style.display = total > 0 ? 'flex' : 'none';
-        }
-
-        function openCartModal() {
-            renderCartItems();
-            document.getElementById('cartOverlay').classList.add('open');
-        }
-
-        function closeCartModal() {
-            document.getElementById('cartOverlay').classList.remove('open');
-        }
-
-        function renderCartItems() {
-            const list = document.getElementById('cartItemsList');
-            if (cart.length === 0) {
-                list.innerHTML = '<p style="color:#aaa;text-align:center;">Cart is empty</p>';
-                document.getElementById('cartTotalDisplay').textContent = '';
-                return;
-            }
-            list.innerHTML = cart.map(item => `
-                <div class="cart-item">
-                    <div>
-                        <div class="cart-item-name">${escapeHtml(item.name)}</div>
-                        <div class="cart-item-price">PKR ${item.price} × ${item.qty}</div>
-                    </div>
-                    <div class="cart-item-controls">
-                        <button class="qty-btn" onclick="changeQty('${item.id}', -1)">−</button>
-                        <span>${item.qty}</span>
-                        <button class="qty-btn" onclick="changeQty('${item.id}', 1)">+</button>
-                    </div>
-                </div>
-            `).join('');
-            const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
-            document.getElementById('cartTotalDisplay').textContent = `Total: PKR ${total}`;
-        }
-
-        function changeQty(id, delta) {
-            const item = cart.find(i => i.id === id);
+        // Open Order Modal
+        function openOrderModal(itemId) {
+            const item = allMenuItems.find(i => i.id === itemId);
             if (!item) return;
-            item.qty += delta;
-            if (item.qty <= 0) cart = cart.filter(i => i.id !== id);
-            updateCartFab();
-            renderCartItems();
+            selectedItem = item;
+            
+            // Reset size selection
+            if (item.category === 'Pizza') {
+                selectedSize = 'Medium';
+            } else {
+                selectedSize = 'Regular';
+            }
+            
+            renderOrderModal();
+            document.getElementById('orderOverlay').classList.add('open');
         }
 
-        // ===== CHECKOUT =====
-        function openCheckout() {
-            closeCartModal();
-            const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
-            const content = document.getElementById('checkoutContent');
-
+        function renderOrderModal() {
+            if (!selectedItem) return;
+            
+            const isPizza = selectedItem.category === 'Pizza';
+            const content = document.getElementById('orderContent');
+            
+            // Calculate current price based on size
+            let currentPrice = selectedItem.price;
+            if (isPizza && selectedSize) {
+                currentPrice = Math.round(selectedItem.price * pizzaSizes[selectedSize].multiplier);
+            }
+            
             if (!loggedInUser) {
                 // Not logged in — show login prompt
                 content.innerHTML = `
                     <div class="login-required-msg">
-                        <p>⚠️ You need to login first to place an order.<br>Your cart will be saved.</p>
+                        <p>⚠️ You need to login first to place an order.</p>
                         <button class="go-login-btn" onclick="window.location.href='account.html'">
                             <i class="fas fa-sign-in-alt"></i> Login / Register
                         </button>
                     </div>
-                    <button class="close-modal-btn" onclick="closeCheckout()">Cancel</button>
+                    <button class="close-modal-btn" onclick="closeOrderModal()">Cancel</button>
                 `;
             } else {
-                // Logged in — show order form with pre-filled data
+                // Logged in — show order form
                 const meta = loggedInUser.user_metadata || {};
+                
+                // Size selector HTML (only for pizza)
+                let sizeSelectorHtml = '';
+                if (isPizza) {
+                    sizeSelectorHtml = `
+                        <label class="order-label">Select Size:</label>
+                        <div class="size-selector" id="sizeSelector">
+                            ${Object.entries(pizzaSizes).map(([size, data]) => `
+                                <div class="size-option ${selectedSize === size ? 'selected' : ''}" onclick="selectSize('${size}')">
+                                    <div class="size-name">${data.label}</div>
+                                    <div class="size-price">PKR ${Math.round(selectedItem.price * data.multiplier)}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+                
                 content.innerHTML = `
+                    <div class="item-detail">
+                        <img src="${selectedItem.image_url || 'https://placehold.co/70x70/333/FFD700?text=Food'}" onerror="this.src='https://placehold.co/70x70/333/FFD700?text=Food'">
+                        <div class="item-detail-info">
+                            <h4>${escapeHtml(selectedItem.name)}</h4>
+                            <p>${escapeHtml(selectedItem.description?.substring(0,60) || 'Delicious taste')}</p>
+                        </div>
+                    </div>
+                    
+                    ${sizeSelectorHtml}
+                    
                     <div class="order-summary-box">
-                        <p><strong>Items:</strong> ${cart.map(i => `${i.name} ×${i.qty}`).join(', ')}</p>
-                        <p class="total">Total: PKR ${total}</p>
+                        <p><strong>Item:</strong> ${escapeHtml(selectedItem.name)}${isPizza ? ` (${selectedSize})` : ''}</p>
+                        <p class="total" id="orderTotal">Total: PKR ${currentPrice}</p>
+                        ${isPizza ? `<p style="font-size:0.8rem; color:#aaa;">Base price: PKR ${selectedItem.price} (Medium)</p>` : ''}
                     </div>
 
-                    <label class="checkout-label">Full Name</label>
-                    <input class="checkout-input" id="coName" value="${escapeHtml(meta.full_name || '')}" placeholder="Your name">
+                    <label class="order-label">Full Name</label>
+                    <input class="order-input" id="orderName" value="${escapeHtml(meta.full_name || '')}" placeholder="Your name">
 
-                    <label class="checkout-label">Phone Number</label>
-                    <input class="checkout-input" id="coPhone" value="${escapeHtml(meta.phone || '')}" placeholder="03XXXXXXXXX">
+                    <label class="order-label">Phone Number</label>
+                    <input class="order-input" id="orderPhone" value="${escapeHtml(meta.phone || '')}" placeholder="03XXXXXXXXX">
 
-                    <label class="checkout-label">Delivery Address</label>
-                    <input class="checkout-input" id="coAddress" value="${escapeHtml(meta.address || '')}" placeholder="Your address">
+                    <label class="order-label">Delivery Address</label>
+                    <input class="order-input" id="orderAddress" value="${escapeHtml(meta.address || '')}" placeholder="Your address">
 
-                    <div id="checkoutMsg"></div>
+                    <div id="orderMsg"></div>
 
-                    <button class="checkout-btn" onclick="placeOrder()">
-                        <i class="fas fa-check"></i> Place Order
+                    <button class="order-now-btn" onclick="placeDirectOrder()">
+                        <i class="fas fa-check"></i> Confirm Order
                     </button>
-                    <button class="close-modal-btn" onclick="closeCheckout()">Cancel</button>
+                    <button class="close-modal-btn" onclick="closeOrderModal()">Cancel</button>
                 `;
             }
-            document.getElementById('checkoutOverlay').classList.add('open');
         }
 
-        function closeCheckout() {
-            document.getElementById('checkoutOverlay').classList.remove('open');
+        // Select pizza size
+        function selectSize(size) {
+            selectedSize = size;
+            renderOrderModal();
         }
 
-        async function placeOrder() {
-            const name = document.getElementById('coName')?.value.trim();
-            const phone = document.getElementById('coPhone')?.value.trim();
-            const address = document.getElementById('coAddress')?.value.trim();
-            const msgDiv = document.getElementById('checkoutMsg');
+        function closeOrderModal() {
+            document.getElementById('orderOverlay').classList.remove('open');
+            selectedItem = null;
+            selectedSize = null;
+        }
+
+        async function placeDirectOrder() {
+            const name = document.getElementById('orderName')?.value.trim();
+            const phone = document.getElementById('orderPhone')?.value.trim();
+            const address = document.getElementById('orderAddress')?.value.trim();
+            const msgDiv = document.getElementById('orderMsg');
 
             if (!name || !phone || !address) {
                 msgDiv.innerHTML = '<div class="msg-error">❌ Please fill in all fields</div>';
                 return;
             }
 
-            const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
-            const itemsOrdered = cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty }));
+            const isPizza = selectedItem.category === 'Pizza';
+            let finalPrice = selectedItem.price;
+            let sizeInfo = '';
+            
+            if (isPizza && selectedSize) {
+                finalPrice = Math.round(selectedItem.price * pizzaSizes[selectedSize].multiplier);
+                sizeInfo = ` (${selectedSize})`;
+            }
+            
+            const itemsOrdered = [{
+                id: selectedItem.id,
+                name: selectedItem.name + sizeInfo,
+                price: finalPrice,
+                qty: 1
+            }];
 
             msgDiv.innerHTML = '<div style="color:#FFD700;">Placing order...</div>';
 
@@ -481,19 +459,18 @@
                     customer_email: loggedInUser.email,
                     customer_address: address,
                     items_ordered: itemsOrdered,
-                    total_price: total,
+                    total_price: finalPrice,
                     status: 'Pending'
                 }]);
 
                 if (error) throw error;
 
-                // Clear cart
-                cart = [];
-                updateCartFab();
-
                 msgDiv.innerHTML = '<div class="msg-success">✅ Order placed successfully!</div>';
-                setTimeout(() => { closeCheckout(); }, 2000);
-                showToast('🎉 Order placed! We will call you soon.');
+                showToast(`🎉 Order placed! ${selectedItem.name}${sizeInfo} - PKR ${finalPrice}`);
+                
+                setTimeout(() => { 
+                    closeOrderModal(); 
+                }, 2000);
 
             } catch(err) {
                 console.error(err);
@@ -517,13 +494,19 @@
             const toast = document.getElementById('orderToast');
             toast.textContent = msg;
             toast.style.display = 'block';
-            setTimeout(() => { toast.style.display = 'none'; }, 2500);
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
         }
 
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
         }
+
+        // Make functions global for onclick
+        window.openOrderModal = openOrderModal;
+        window.closeOrderModal = closeOrderModal;
+        window.placeDirectOrder = placeDirectOrder;
+        window.selectSize = selectSize;
 
         // Init
         document.addEventListener('DOMContentLoaded', async () => {
