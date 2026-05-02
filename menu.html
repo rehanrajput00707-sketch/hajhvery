@@ -40,11 +40,6 @@
             font-size: 2rem;
             margin-bottom: 1.5rem;
         }
-        .order-modal h3 {
-            color: #FFD700;
-            font-size: 1.3rem;
-            margin-bottom: 1rem;
-        }
         .order-input {
             width: 100%;
             padding: 0.8rem;
@@ -173,6 +168,58 @@
             color: #aaa;
             font-size: 0.8rem;
         }
+        /* Discount styles */
+        .discount-section {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid #FFD700;
+        }
+        .points-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+        .points-badge-large {
+            background: #FFD700;
+            color: #0a0a0a;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .discount-input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+        }
+        .discount-input-group input {
+            flex: 1;
+            padding: 0.5rem;
+            background: #222;
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: white;
+        }
+        .apply-discount-btn {
+            background: #FFD700;
+            color: #0a0a0a;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .remove-discount-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 0.3rem 0.8rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
     </style>
 </head>
 <body>
@@ -247,6 +294,16 @@
         let loggedInUser = null;
         let selectedItem = null;
         let selectedSize = null;
+        let currentPoints = 0;
+        let appliedDiscount = 0;
+        let discountPointsUsed = 0;
+
+        // Discount configuration (can be modified from admin)
+        let discountConfig = {
+            pointsToPkr: 1, // 1 point = 1 PKR discount
+            maxDiscountPercent: 50, // Max 50% discount
+            minPointsToRedeem: 10
+        };
 
         // Pizza size options with price multipliers
         const pizzaSizes = {
@@ -256,19 +313,60 @@
             'Extra Large': { multiplier: 1.8, label: 'Extra Large (14")' }
         };
 
-        // Default size for non-pizza items
-        const defaultSize = { multiplier: 1.0, label: 'Regular' };
-
         // Mobile nav
         document.getElementById('hamburger')?.addEventListener('click', () => {
             document.getElementById('navLinks').classList.toggle('active');
         });
+
+        // Load discount config from database
+        async function loadDiscountConfig() {
+            try {
+                const { data, error } = await supabase
+                    .from('discount_config')
+                    .select('*')
+                    .single();
+                if (data && !error) {
+                    discountConfig = {
+                        pointsToPkr: data.points_to_pkr || 1,
+                        maxDiscountPercent: data.max_discount_percent || 50,
+                        minPointsToRedeem: data.min_points_to_redeem || 10
+                    };
+                }
+            } catch(e) {
+                console.log('Using default discount config');
+            }
+        }
+
+        // Load user points
+        async function loadUserPoints(email) {
+            if (!email) return 0;
+            const { data, error } = await supabase
+                .from('points_transactions')
+                .select('points')
+                .eq('user_email', email);
+            if (error) return 0;
+            const total = data.reduce((sum, t) => sum + t.points, 0);
+            currentPoints = total;
+            return total;
+        }
+
+        // Deduct points when used
+        async function deductPoints(email, points, reason) {
+            const { error } = await supabase
+                .from('points_transactions')
+                .insert([{ user_email: email, points: -points, reason: reason }]);
+            if (error) console.error('Error deducting points:', error);
+        }
 
         // Check if user is logged in
         async function checkSession() {
             try {
                 const { data: { user } } = await supabase.auth.getUser();
                 loggedInUser = user || null;
+                if (loggedInUser) {
+                    await loadUserPoints(loggedInUser.email);
+                    await loadDiscountConfig();
+                }
             } catch(e) {
                 loggedInUser = null;
             }
@@ -309,7 +407,7 @@
                     <div class="desc">${escapeHtml(item.description?.substring(0,80) || 'Signature taste')}</div>
                     <div class="price" id="price-${item.id}">PKR ${item.price}</div>
                     <button class="add-order-btn" onclick="openOrderModal('${item.id}')">
-                        <i class="fas fa-shopping-cart"></i> Order Now
+                        <i class="fas fa-tag"></i> Order Now
                     </button>
                 </div>
             `).join('');
@@ -320,6 +418,8 @@
             const item = allMenuItems.find(i => i.id === itemId);
             if (!item) return;
             selectedItem = item;
+            appliedDiscount = 0;
+            discountPointsUsed = 0;
             
             // Reset size selection
             if (item.category === 'Pizza') {
@@ -332,6 +432,40 @@
             document.getElementById('orderOverlay').classList.add('open');
         }
 
+        // Apply discount using points
+        function applyPointsDiscount(pointsToUse) {
+            const isPizza = selectedItem.category === 'Pizza';
+            let originalPrice = selectedItem.price;
+            if (isPizza && selectedSize) {
+                originalPrice = Math.round(selectedItem.price * pizzaSizes[selectedSize].multiplier);
+            }
+            
+            const maxDiscountPossible = (originalPrice * discountConfig.maxDiscountPercent) / 100;
+            const pointsValue = pointsToUse * discountConfig.pointsToPkr;
+            let discountAmount = Math.min(pointsValue, maxDiscountPossible, originalPrice - 10);
+            
+            if (pointsToUse > currentPoints) {
+                document.getElementById('discountMsg').innerHTML = '<span style="color:#ff4444;">❌ Not enough points!</span>';
+                return;
+            }
+            
+            if (pointsToUse < discountConfig.minPointsToRedeem) {
+                document.getElementById('discountMsg').innerHTML = `<span style="color:#ff4444;">❌ Minimum ${discountConfig.minPointsToRedeem} points to redeem!</span>`;
+                return;
+            }
+            
+            appliedDiscount = discountAmount;
+            discountPointsUsed = pointsToUse;
+            document.getElementById('discountMsg').innerHTML = `<span style="color:#4caf50;">✅ Discount applied: PKR ${discountAmount} (${pointsToUse} points)</span>`;
+            renderOrderModal();
+        }
+
+        function removeDiscount() {
+            appliedDiscount = 0;
+            discountPointsUsed = 0;
+            renderOrderModal();
+        }
+
         function renderOrderModal() {
             if (!selectedItem) return;
             
@@ -339,10 +473,12 @@
             const content = document.getElementById('orderContent');
             
             // Calculate current price based on size
-            let currentPrice = selectedItem.price;
+            let originalPrice = selectedItem.price;
             if (isPizza && selectedSize) {
-                currentPrice = Math.round(selectedItem.price * pizzaSizes[selectedSize].multiplier);
+                originalPrice = Math.round(selectedItem.price * pizzaSizes[selectedSize].multiplier);
             }
+            
+            const finalPrice = Math.max(originalPrice - appliedDiscount, 0);
             
             if (!loggedInUser) {
                 // Not logged in — show login prompt
@@ -356,7 +492,7 @@
                     <button class="close-modal-btn" onclick="closeOrderModal()">Cancel</button>
                 `;
             } else {
-                // Logged in — show order form
+                // Logged in — show order form with discount section
                 const meta = loggedInUser.user_metadata || {};
                 
                 // Size selector HTML (only for pizza)
@@ -386,10 +522,28 @@
                     
                     ${sizeSelectorHtml}
                     
+                    <div class="discount-section">
+                        <div class="points-info">
+                            <span><i class="fas fa-star"></i> Your Points:</span>
+                            <span class="points-badge-large">🏆 ${currentPoints} pts</span>
+                        </div>
+                        <div class="discount-input-group">
+                            <input type="number" id="pointsToRedeem" placeholder="Points to redeem (${discountConfig.minPointsToRedeem}+)" min="${discountConfig.minPointsToRedeem}" max="${currentPoints}">
+                            <button class="apply-discount-btn" onclick="applyPointsDiscount(parseInt(document.getElementById('pointsToRedeem').value))">
+                                Apply Discount
+                            </button>
+                        </div>
+                        <div id="discountMsg"></div>
+                        ${appliedDiscount > 0 ? `<button class="remove-discount-btn" onclick="removeDiscount()">Remove Discount</button>` : ''}
+                        <small style="color:#aaa;">${discountConfig.pointsToPkr} point = PKR 1 | Max ${discountConfig.maxDiscountPercent}% off</small>
+                    </div>
+                    
                     <div class="order-summary-box">
                         <p><strong>Item:</strong> ${escapeHtml(selectedItem.name)}${isPizza ? ` (${selectedSize})` : ''}</p>
-                        <p class="total" id="orderTotal">Total: PKR ${currentPrice}</p>
-                        ${isPizza ? `<p style="font-size:0.8rem; color:#aaa;">Base price: PKR ${selectedItem.price} (Medium)</p>` : ''}
+                        ${appliedDiscount > 0 ? `<p>Original Price: PKR ${originalPrice}</p>` : ''}
+                        ${appliedDiscount > 0 ? `<p>Discount: -PKR ${appliedDiscount}</p>` : ''}
+                        <p class="total">Total: PKR ${finalPrice}</p>
+                        ${appliedDiscount > 0 ? `<p style="font-size:0.8rem; color:#aaa;">Points used: ${discountPointsUsed}</p>` : ''}
                     </div>
 
                     <label class="order-label">Full Name</label>
@@ -403,8 +557,8 @@
 
                     <div id="orderMsg"></div>
 
-                    <button class="order-now-btn" onclick="placeDirectOrder()">
-                        <i class="fas fa-check"></i> Confirm Order
+                    <button class="order-now-btn" onclick="placeDirectOrder(${finalPrice})">
+                        <i class="fas fa-check"></i> Confirm Order (PKR ${finalPrice})
                     </button>
                     <button class="close-modal-btn" onclick="closeOrderModal()">Cancel</button>
                 `;
@@ -414,6 +568,8 @@
         // Select pizza size
         function selectSize(size) {
             selectedSize = size;
+            appliedDiscount = 0;
+            discountPointsUsed = 0;
             renderOrderModal();
         }
 
@@ -421,9 +577,11 @@
             document.getElementById('orderOverlay').classList.remove('open');
             selectedItem = null;
             selectedSize = null;
+            appliedDiscount = 0;
+            discountPointsUsed = 0;
         }
 
-        async function placeDirectOrder() {
+        async function placeDirectOrder(finalPrice) {
             const name = document.getElementById('orderName')?.value.trim();
             const phone = document.getElementById('orderPhone')?.value.trim();
             const address = document.getElementById('orderAddress')?.value.trim();
@@ -435,24 +593,33 @@
             }
 
             const isPizza = selectedItem.category === 'Pizza';
-            let finalPrice = selectedItem.price;
+            let originalPrice = selectedItem.price;
             let sizeInfo = '';
             
             if (isPizza && selectedSize) {
-                finalPrice = Math.round(selectedItem.price * pizzaSizes[selectedSize].multiplier);
+                originalPrice = Math.round(selectedItem.price * pizzaSizes[selectedSize].multiplier);
                 sizeInfo = ` (${selectedSize})`;
             }
             
             const itemsOrdered = [{
                 id: selectedItem.id,
                 name: selectedItem.name + sizeInfo,
-                price: finalPrice,
-                qty: 1
+                price: originalPrice,
+                qty: 1,
+                discount_applied: appliedDiscount,
+                points_used: discountPointsUsed,
+                final_price: finalPrice
             }];
 
             msgDiv.innerHTML = '<div style="color:#FFD700;">Placing order...</div>';
 
             try {
+                // Deduct points if discount was applied
+                if (discountPointsUsed > 0) {
+                    await deductPoints(loggedInUser.email, discountPointsUsed, `Used ${discountPointsUsed} points for discount on ${selectedItem.name}`);
+                    await loadUserPoints(loggedInUser.email);
+                }
+
                 const { error } = await supabase.from('orders').insert([{
                     customer_name: name,
                     customer_phone: phone,
@@ -460,6 +627,9 @@
                     customer_address: address,
                     items_ordered: itemsOrdered,
                     total_price: finalPrice,
+                    original_price: originalPrice,
+                    discount_amount: appliedDiscount,
+                    points_used: discountPointsUsed,
                     status: 'Pending'
                 }]);
 
@@ -507,6 +677,8 @@
         window.closeOrderModal = closeOrderModal;
         window.placeDirectOrder = placeDirectOrder;
         window.selectSize = selectSize;
+        window.applyPointsDiscount = applyPointsDiscount;
+        window.removeDiscount = removeDiscount;
 
         // Init
         document.addEventListener('DOMContentLoaded', async () => {
@@ -514,6 +686,20 @@
             await loadMenuItems();
             setupFilters();
         });
+
+        const selectedItemId = sessionStorage.getItem('selectedItemId');
+
+        // Add this to menu.html script section
+const preselectedItemId = sessionStorage.getItem('selectedItemId');
+if (preselectedItemId) {
+    setTimeout(() => {
+        const item = allMenuItems.find(i => i.id === preselectedItemId);
+        if (item) {
+            openOrderModal(item.id);
+            sessionStorage.removeItem('selectedItemId');
+        }
+    }, 500);
+}
     </script>
 </body>
 </html>

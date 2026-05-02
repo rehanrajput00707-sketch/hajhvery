@@ -12,12 +12,30 @@
     <script src="supabase-config.js"></script>
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Additional styles for famous items */
+        .famous-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #FFD700;
+            color: #0a0a0a;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            z-index: 2;
+        }
+        .card {
+            position: relative;
+        }
+    </style>
 </head>
 <body>
     <!-- Sticky Navbar -->
     <nav class="navbar">
         <div class="nav-container">
-            <div class="logo">Foodfight</div>
+            <div class="logo">FOODFIGHT</div>
             <ul class="nav-links" id="navLinks">
                 <li><a href="index.html" class="active">Home</a></li>
                 <li><a href="menu.html">Menu</a></li>
@@ -41,18 +59,18 @@
                 <a href="menu.html" class="btn-yellow">Order Now <i class="fas fa-arrow-right"></i></a>
             </div>
             <div class="hero-image">
-                <img src="image.png" alt="Foodfight Street Food">
+                <img src="image.png" alt="Foodfight Street Food" onerror="this.src='https://placehold.co/600x400/FFD700/0a0a0a?text=Foodfight'">
             </div>
         </div>
     </section>
 
-    <!-- Top Picks (Horizontal scroll) -->
+    <!-- Famous Items Section (renamed from Top Picks) -->
     <section class="top-picks">
         <div class="container">
-            <h2 class="section-title">🔥 Top Picks</h2>
-            <div class="scroll-cards" id="topPicksContainer">
+            <h2 class="section-title">⭐ FAMOUS ITEMS ⭐</h2>
+            <div class="scroll-cards" id="famousItemsContainer">
                 <!-- dynamically loaded -->
-                <div class="loading">Loading top picks...</div>
+                <div class="loading">Loading famous items...</div>
             </div>
         </div>
     </section>
@@ -69,8 +87,9 @@
                     <p><i class="fas fa-clock"></i> Daily: 2PM – 2AM</p>
                 </div>
                 <div class="map-placeholder">
-                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3441.1234567890123!2d73.0632358!3d30.2740893!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x393d39007933d7a9%3A0xf972342d37e98e3e!2sFood%20Fight!5e0!3m2!1sen!2s!4v1234567890123!5m2!1sen!2s" width="100%" height="350" style="border:0; border-radius: 16px;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
-                     width="100%" height="250" style="border:0; border-radius: 12px;" allowfullscreen="" loading="lazy"></iframe>
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3441.1234567890123!2d73.0632358!3d30.2740893!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x393d39007933d7a9%3A0xf972342d37e98e3e!2sFood%20Fight!5e0!3m2!1sen!2s!4v1234567890123!5m2!1sen!2s" 
+                        width="100%" height="250" style="border:0; border-radius: 12px;" allowfullscreen="" loading="lazy">
+                    </iframe>
                 </div>
             </div>
         </div>
@@ -89,12 +108,125 @@
         </div>
     </footer>
 
+    <!-- Toast Notification -->
+    <div id="orderToast" style="position:fixed;bottom:20px;right:20px;background:#FFD700;color:#000;padding:12px 24px;border-radius:50px;display:none;z-index:2000;font-weight:bold;font-family:'Poppins',sans-serif;"></div>
+
     <script>
         // Global supabase client from supabase-config.js
+        let currentUser = null;
+
+        // Check if user is logged in
+        async function checkSession() {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                currentUser = user || null;
+            } catch(e) {
+                currentUser = null;
+            }
+        }
+
+        // Show toast message
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('orderToast');
+            toast.textContent = msg;
+            toast.style.background = isError ? '#ff4444' : '#FFD700';
+            toast.style.color = isError ? 'white' : '#0a0a0a';
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        // Handle order click - redirect to menu page with item preselected
+        function handleOrderClick(itemId, itemName, itemPrice) {
+            // Check if user is logged in
+            if (!currentUser) {
+                showToast('⚠️ Please login first to place order! Redirecting...', true);
+                setTimeout(() => {
+                    window.location.href = 'account.html';
+                }, 1500);
+                return;
+            }
+            
+            // Store selected item in sessionStorage to pre-fill on menu page
+            sessionStorage.setItem('selectedItemId', itemId);
+            sessionStorage.setItem('selectedItemName', itemName);
+            sessionStorage.setItem('selectedItemPrice', itemPrice);
+            
+            // Redirect to menu page for size selection and checkout
+            window.location.href = 'menu.html';
+        }
+
+        // Load famous items from Supabase
+        async function loadFamousItems() {
+            const container = document.getElementById('famousItemsContainer');
+            if(!container) return;
+            try {
+                // Get famous items (high points reward or specific categories)
+                const { data, error } = await supabase
+                    .from('menu_items')
+                    .select('*')
+                    .eq('is_available', true)
+                    .in('category', ['Pizza', 'Burgers', 'Desserts'])
+                    .limit(6);
+                    
+                if(error) throw error;
+                if(!data || data.length === 0) {
+                    // Fallback: get any available items
+                    const { data: fallback } = await supabase
+                        .from('menu_items')
+                        .select('*')
+                        .eq('is_available', true)
+                        .limit(6);
+                    if(fallback) data = fallback;
+                }
+                
+                if(!data || data.length === 0) {
+                    container.innerHTML = '<p>No famous items available</p>';
+                    return;
+                }
+                
+                // Mark some items as "Famous" based on category
+                const famousItems = data.map(item => ({
+                    ...item,
+                    isFamous: item.category === 'Pizza' || item.category === 'Burgers' || item.name.includes('Zinger')
+                }));
+                
+                container.innerHTML = famousItems.map(item => `
+                    <div class="card">
+                        ${item.isFamous ? '<div class="famous-badge">⭐ FAMOUS</div>' : ''}
+                        <img src="${item.image_url || 'https://placehold.co/300x200/111111/FFD700?text=Foodfight'}" alt="${escapeHtml(item.name)}" onerror="this.src='https://placehold.co/300x200/111111/FFD700?text=Foodfight'">
+                        <h3>${escapeHtml(item.name)}</h3>
+                        <p>${escapeHtml(item.description?.substring(0,60) || 'Delicious taste')}</p>
+                        <div class="price">PKR ${item.price}</div>
+                        <button class="order-btn-small" onclick="handleOrderClick('${item.id}', '${escapeHtml(item.name)}', ${item.price})">
+                            Order Now <i class="fas fa-shopping-cart"></i>
+                        </button>
+                    </div>
+                `).join('');
+                
+            } catch(err) {
+                console.error(err);
+                container.innerHTML = '<p>Failed to load famous items</p>';
+            }
+        }
+
+        function escapeHtml(str) { 
+            if(!str) return ''; 
+            return str.replace(/[&<>]/g, function(m){
+                if(m==='&') return '&amp;'; 
+                if(m==='<') return '&lt;'; 
+                if(m==='>') return '&gt;'; 
+                return m;
+            }); 
+        }
+
+        // Initialize page
         document.addEventListener('DOMContentLoaded', async () => {
-            // load top picks from menu_items (limit 4)
-            await loadTopPicks();
-            // mobile nav toggle
+            await checkSession();
+            await loadFamousItems();
+            
+            // Mobile nav toggle
             const hamburger = document.getElementById('hamburger');
             const navLinks = document.getElementById('navLinks');
             if(hamburger) {
@@ -103,44 +235,6 @@
                 });
             }
         });
-
-        async function loadTopPicks() {
-            const container = document.getElementById('topPicksContainer');
-            if(!container) return;
-            try {
-                const { data, error } = await supabase
-                    .from('menu_items')
-                    .select('*')
-                    .eq('is_available', true)
-                    .limit(4);
-                if(error) throw error;
-                if(!data || data.length === 0) {
-                    container.innerHTML = '<p>No items available</p>';
-                    return;
-                }
-                container.innerHTML = data.map(item => `
-                    <div class="card">
-                        <img src="${item.image_url || 'https://placehold.co/300x200/111111/FFD700?text=Hajiari'}" alt="${item.name}">
-                        <h3>${escapeHtml(item.name)}</h3>
-                        <p>${escapeHtml(item.description?.substring(0,60) || 'Delicious taste')}</p>
-                        <div class="price">PKR ${item.price}</div>
-                        <button class="order-btn-small" data-name="${escapeHtml(item.name)}" data-price="${item.price}">Order <i class="fas fa-shopping-cart"></i></button>
-                    </div>
-                `).join('');
-                // attach order alert
-                document.querySelectorAll('.order-btn-small').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        alert(`🍔 "${btn.getAttribute('data-name')}" added to cart! (Demo mode)`);
-                    });
-                });
-            } catch(err) {
-                console.error(err);
-                container.innerHTML = '<p>Failed to load menu</p>';
-            }
-        }
-
-        function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
     </script>
 </body>
 </html>

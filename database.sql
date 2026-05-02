@@ -101,3 +101,36 @@ INSERT INTO receipt_codes (code, points_value, is_used) VALUES
 ('HAJIARI10', 100, false),
 ('FIRSTORDER', 75, false)
 ON CONFLICT (code) DO NOTHING;
+
+-- Discount configuration table for admin control
+CREATE TABLE IF NOT EXISTS discount_config (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    points_to_pkr integer DEFAULT 1,
+    max_discount_percent integer DEFAULT 50,
+    min_points_to_redeem integer DEFAULT 10,
+    updated_at timestamptz DEFAULT now()
+);
+
+-- Insert default configuration
+INSERT INTO discount_config (points_to_pkr, max_discount_percent, min_points_to_redeem)
+VALUES (1, 50, 10)
+ON CONFLICT DO NOTHING;
+
+-- Discount configuration table
+CREATE TABLE IF NOT EXISTS discount_config (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    points_to_pkr integer DEFAULT 1,
+    max_discount_percent integer DEFAULT 50,
+    min_points_to_redeem integer DEFAULT 10,
+    updated_at timestamptz DEFAULT now()
+);
+
+-- Insert default config
+INSERT INTO discount_config (points_to_pkr, max_discount_percent, min_points_to_redeem)
+VALUES (1, 50, 10)
+ON CONFLICT DO NOTHING;
+
+-- Update orders table to store discount info
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS original_price integer;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_amount integer DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS points_used integer DEFAULT 0;
