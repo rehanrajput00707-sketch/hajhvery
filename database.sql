@@ -167,3 +167,14 @@ CREATE POLICY IF NOT EXISTS "Enable all for all users" ON menu_items FOR ALL USI
 CREATE POLICY IF NOT EXISTS "Enable all for all users" ON orders FOR ALL USING (true);
 CREATE POLICY IF NOT EXISTS "Enable all for all users" ON game_scores FOR ALL USING (true);
 CREATE POLICY IF NOT EXISTS "Enable all for all users" ON points_transactions FOR ALL USING (true);
+
+
+-- Set default values for discount columns
+ALTER TABLE orders ALTER COLUMN discount_amount SET DEFAULT 0;
+ALTER TABLE orders ALTER COLUMN points_used SET DEFAULT 0;
+ALTER TABLE orders ALTER COLUMN original_price SET DEFAULT 0;
+
+-- Update any existing NULL values to 0
+UPDATE orders SET discount_amount = 0 WHERE discount_amount IS NULL;
+UPDATE orders SET points_used = 0 WHERE points_used IS NULL;
+UPDATE orders SET original_price = 0 WHERE original_price IS NULL;
