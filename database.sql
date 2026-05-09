@@ -1,20 +1,9 @@
 -- ============================================
--- COMPLETE DATABASE SETUP FOR FOODFIGHT RESTAURANT
--- Run this entire script in Supabase SQL Editor
+-- COMPLETE DATABASE SETUP - CLEAN VERSION
+-- Run this once in Supabase SQL Editor
 -- ============================================
 
--- 1. Disable RLS temporarily on all tables (for development)
-ALTER TABLE IF EXISTS menu_items DISABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS orders DISABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS game_scores DISABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS daily_missions DISABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS receipt_codes DISABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS points_transactions DISABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS discount_config DISABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS treasure_codes DISABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS treasure_redemptions DISABLE ROW LEVEL SECURITY;
-
--- 2. Create tables if they don't exist
+-- 1. Create tables (if not exist)
 CREATE TABLE IF NOT EXISTS menu_items (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     name text NOT NULL,
@@ -35,7 +24,7 @@ CREATE TABLE IF NOT EXISTS orders (
     customer_address text,
     items_ordered jsonb,
     total_price integer,
-    original_price integer,
+    original_price integer DEFAULT 0,
     discount_amount integer DEFAULT 0,
     points_used integer DEFAULT 0,
     status text DEFAULT 'Pending',
@@ -110,71 +99,52 @@ CREATE TABLE IF NOT EXISTS treasure_redemptions (
     redeemed_at timestamptz DEFAULT now()
 );
 
--- 3. Insert sample menu items
-INSERT INTO menu_items (name, description, price, category, points_reward, is_available) VALUES
-('Chicken Zinger Burger', 'Crispy fried chicken with spicy mayo, lettuce, and cheese', 450, 'Burgers', 15, true),
-('Beef Burger', 'Juicy beef patty with caramelized onions, cheese, and special sauce', 500, 'Burgers', 15, true),
-('Chicken Fajita Pizza', 'Spicy chicken fajita, bell peppers, onions, and mozzarella', 1200, 'Pizza', 30, true),
-('Pepperoni Pizza', 'Classic pepperoni, mozzarella, and tomato sauce', 1100, 'Pizza', 30, true),
-('Gulab Jamun (2 pcs)', 'Soft, golden brown milk solids soaked in sugar syrup', 120, 'Desserts', 5, true),
-('Gulab Jamun (4 pcs)', 'Soft, golden brown milk solids soaked in sugar syrup', 220, 'Desserts', 10, true),
-('Family Deal', '2 Burgers + 2 Fries + 2 Drinks', 1200, 'Deals', 40, true),
-('Regular Fries', 'Crispy golden fries with secret seasoning', 150, 'Fries', 5, true),
-('Soft Drink', 'Coke, Sprite, or Fanta', 100, 'Drinks', 3, true)
-ON CONFLICT (id) DO NOTHING;
+-- 2. Add missing columns to orders (safety check)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='original_price') THEN
+        ALTER TABLE orders ADD COLUMN original_price integer DEFAULT 0;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='discount_amount') THEN
+        ALTER TABLE orders ADD COLUMN discount_amount integer DEFAULT 0;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='points_used') THEN
+        ALTER TABLE orders ADD COLUMN points_used integer DEFAULT 0;
+    END IF;
+END $$;
 
--- 4. Insert default discount configuration
+-- 3. Insert sample data (only if tables are empty)
+INSERT INTO menu_items (name, description, price, category, points_reward, is_available)
+SELECT * FROM (VALUES
+    ('Chicken Zinger Burger', 'Crispy fried chicken with spicy mayo', 450, 'Burgers', 15, true),
+    ('Beef Burger', 'Juicy beef patty with cheese', 500, 'Burgers', 15, true),
+    ('Chicken Fajita Pizza', 'Spicy chicken fajita pizza', 1200, 'Pizza', 30, true),
+    ('Pepperoni Pizza', 'Classic pepperoni', 1100, 'Pizza', 30, true),
+    ('Gulab Jamun (2 pcs)', 'Soft sweet dessert', 120, 'Desserts', 5, true),
+    ('Regular Fries', 'Crispy fries', 150, 'Fries', 5, true),
+    ('Soft Drink', 'Coke / Sprite / Fanta', 100, 'Drinks', 3, true)
+) AS v(name, description, price, category, points_reward, is_available)
+WHERE NOT EXISTS (SELECT 1 FROM menu_items LIMIT 1);
+
 INSERT INTO discount_config (points_to_pkr, max_discount_percent, min_points_to_redeem)
-VALUES (1, 50, 10)
-ON CONFLICT (id) DO NOTHING;
+SELECT 1, 50, 10
+WHERE NOT EXISTS (SELECT 1 FROM discount_config LIMIT 1);
 
--- 5. Insert sample daily mission for today
-INSERT INTO daily_missions (title, description, reward_points, reward_text, active_date) 
-VALUES ('Food Catcher Challenge', 'Catch 30 falling food items in the game', 50, 'Free Gulab Jamun', CURRENT_DATE)
-ON CONFLICT (active_date) DO UPDATE SET 
-    title = EXCLUDED.title,
-    description = EXCLUDED.description,
-    reward_points = EXCLUDED.reward_points,
-    reward_text = EXCLUDED.reward_text;
+INSERT INTO daily_missions (title, description, reward_points, reward_text, active_date)
+SELECT 'Food Catcher Challenge', 'Catch 30 falling foods', 50, 'Free Gulab Jamun', CURRENT_DATE
+WHERE NOT EXISTS (SELECT 1 FROM daily_missions WHERE active_date = CURRENT_DATE);
 
--- 6. Insert sample receipt codes
-INSERT INTO receipt_codes (code, points_value, is_used) VALUES
-('HJWELCOME', 50, false),
-('FOODFIGHT10', 100, false),
-('FIRSTORDER', 75, false)
-ON CONFLICT (code) DO NOTHING;
+INSERT INTO receipt_codes (code, points_value, is_used)
+SELECT * FROM (VALUES ('WELCOME50', 50, false), ('FIGHT100', 100, false)) AS v(code, points_value, is_used)
+WHERE NOT EXISTS (SELECT 1 FROM receipt_codes LIMIT 1);
 
--- 7. Insert sample treasure codes
-INSERT INTO treasure_codes (code, title, points_value, reward_description) VALUES
-('TREASURE001', 'Golden Burger', 100, 'Free Drink with next order'),
-('TREASURE002', 'Secret Fry Stash', 75, 'Free Fries'),
-('TREASURE003', 'Arifwala Special', 150, '10% off on Pizza')
-ON CONFLICT (code) DO NOTHING;
-
--- 8. Enable RLS back (optional - for production)
--- ALTER TABLE menu_items ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE game_scores ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE daily_missions ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE receipt_codes ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE points_transactions ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE discount_config ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE treasure_codes ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE treasure_redemptions ENABLE ROW LEVEL SECURITY;
-
--- 9. Create policies for public access (for development)
-CREATE POLICY IF NOT EXISTS "Enable all for all users" ON menu_items FOR ALL USING (true);
-CREATE POLICY IF NOT EXISTS "Enable all for all users" ON orders FOR ALL USING (true);
-CREATE POLICY IF NOT EXISTS "Enable all for all users" ON game_scores FOR ALL USING (true);
-CREATE POLICY IF NOT EXISTS "Enable all for all users" ON points_transactions FOR ALL USING (true);
-
-
--- Set default values for discount columns
-ALTER TABLE orders ALTER COLUMN discount_amount SET DEFAULT 0;
-ALTER TABLE orders ALTER COLUMN points_used SET DEFAULT 0;
-ALTER TABLE orders ALTER COLUMN original_price SET DEFAULT 0;
-
--- Update any existing NULL values to 0
-UPDATE orders SET discount_amount = 0 WHERE discount_amount IS NULL;
-UPDATE orders SET points_used = 0 WHERE points_used IS NULL;
-UPDATE orders SET original_price = 0 WHERE original_price IS NULL;
+-- 4. Disable RLS for development (optional)
+ALTER TABLE menu_items DISABLE ROW LEVEL SECURITY;
+ALTER TABLE orders DISABLE ROW LEVEL SECURITY;
+ALTER TABLE game_scores DISABLE ROW LEVEL SECURITY;
+ALTER TABLE daily_missions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE receipt_codes DISABLE ROW LEVEL SECURITY;
+ALTER TABLE points_transactions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE discount_config DISABLE ROW LEVEL SECURITY;
+ALTER TABLE treasure_codes DISABLE ROW LEVEL SECURITY;
+ALTER TABLE treasure_redemptions DISABLE ROW LEVEL SECURITY;
