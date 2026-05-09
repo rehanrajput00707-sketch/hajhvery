@@ -3,114 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Foodfight - Order with Points Discount</title>
+    <title>Foodfight - Order</title>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0a0a0a; font-family: 'Poppins', sans-serif; color: white; }
+        .navbar { background: #0a0a0a; padding: 1rem 2rem; border-bottom: 2px solid #FFD700; }
+        .nav-container { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: auto; }
+        .logo { font-family: 'Bebas Neue', cursive; color: #FFD700; font-size: 2rem; }
+        .nav-links { display: flex; gap: 2rem; list-style: none; }
+        .nav-links a { color: white; text-decoration: none; }
+        .nav-links a.active { color: #FFD700; }
+        .hamburger { display: none; font-size: 1.5rem; cursor: pointer; color: #FFD700; }
+        .filter-bar { display: flex; justify-content: center; gap: 0.8rem; flex-wrap: wrap; margin: 2rem auto; }
+        .filter-btn { background: #1a1a1a; border: none; padding: 0.5rem 1.2rem; border-radius: 40px; color: white; cursor: pointer; }
+        .filter-btn.active { background: #FFD700; color: #0a0a0a; }
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem; padding: 2rem; max-width: 1200px; margin: auto; }
+        .menu-card { background: #111; border-radius: 20px; padding: 1rem; position: relative; border: 1px solid #2a2a2a; }
+        .points-badge { position: absolute; top: 10px; right: 10px; background: #FFD700; color: #000; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
+        .price { color: #FFD700; font-weight: bold; margin: 0.5rem 0; font-size: 1.2rem; }
+        button { background: #FFD700; color: #0a0a0a; border: none; padding: 0.6rem; border-radius: 30px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 0.5rem; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
         .modal-overlay.open { display: flex; }
-        .order-modal {
-            background: #111;
-            border: 2px solid #FFD700;
-            border-radius: 24px;
-            padding: 2rem;
-            width: 90%;
-            max-width: 500px;
-            max-height: 85vh;
-            overflow-y: auto;
-        }
-        .order-modal h2 { color: #FFD700; font-family: 'Bebas Neue', cursive; margin-bottom: 1.5rem; }
-        .order-input, .order-textarea {
-            width: 100%;
-            padding: 0.8rem;
-            background: #222;
-            border: 1px solid #444;
-            border-radius: 12px;
-            color: white;
-            margin-bottom: 1rem;
-        }
+        .order-modal { background: #111; border: 2px solid #FFD700; border-radius: 24px; padding: 2rem; width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; }
+        .order-input { width: 100%; padding: 0.8rem; background: #222; border: 1px solid #444; border-radius: 12px; color: white; margin-bottom: 1rem; }
         .order-label { display: block; color: #FFD700; margin-bottom: 0.3rem; }
         .size-selector { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
-        .size-option {
-            background: #222;
-            border: 1px solid #444;
-            border-radius: 12px;
-            padding: 0.5rem;
-            text-align: center;
-            cursor: pointer;
-            flex: 1;
-        }
+        .size-option { background: #222; border: 1px solid #444; border-radius: 12px; padding: 0.5rem; text-align: center; cursor: pointer; flex: 1; }
         .size-option.selected { background: #FFD700; color: #0a0a0a; }
-        .discount-section {
-            background: #1a1a1a;
-            border-radius: 12px;
-            padding: 1rem;
-            margin: 1rem 0;
-        }
-        .points-badge-large {
-            background: #FFD700;
-            color: #0a0a0a;
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
-            font-weight: bold;
-        }
-        .btn-primary {
-            background: #FFD700;
-            color: #0a0a0a;
-            border: none;
-            padding: 0.8rem 1.5rem;
-            border-radius: 40px;
-            cursor: pointer;
-            font-weight: bold;
-            width: 100%;
-            margin-top: 0.5rem;
-        }
-        .filter-bar { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; margin: 2rem auto; }
-        .filter-btn {
-            background: #1a1a1a;
-            border: none;
-            padding: 0.7rem 1.8rem;
-            border-radius: 40px;
-            color: white;
-            cursor: pointer;
-        }
-        .filter-btn.active { background: #FFD700; color: #0a0a0a; }
-        .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; padding: 2rem; }
-        .menu-card { background: #111; border-radius: 20px; overflow: hidden; position: relative; padding: 1rem; }
-        .points-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #FFD700;
-            color: #0a0a0a;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-        }
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #FFD700;
-            color: #0a0a0a;
-            padding: 12px 24px;
-            border-radius: 50px;
-            display: none;
-            z-index: 2000;
-        }
-        @media (max-width: 768px) { .menu-grid { grid-template-columns: 1fr; } }
+        .discount-section { background: #1a1a1a; border-radius: 12px; padding: 1rem; margin: 1rem 0; }
+        .points-badge-large { background: #FFD700; color: #0a0a0a; padding: 0.3rem 0.8rem; border-radius: 20px; font-weight: bold; }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: #FFD700; color: #000; padding: 12px 24px; border-radius: 50px; display: none; z-index: 2000; font-weight: bold; }
+        @media (max-width: 768px) { .nav-links { display: none; } .hamburger { display: block; } .menu-grid { padding: 1rem; } }
     </style>
 </head>
 <body>
@@ -122,9 +48,9 @@
                 <li><a href="menu.html" class="active">Menu</a></li>
                 <li><a href="game.html">Game</a></li>
                 <li><a href="account.html">Contact</a></li>
-                <li><a href="account.html"><i class="fas fa-user-circle"></i> Account</a></li>
+                <li><a href="account.html">Account</a></li>
             </ul>
-            <div class="hamburger" id="hamburger"><i class="fas fa-bars"></i></div>
+            <div class="hamburger" id="hamburger">☰</div>
         </div>
     </nav>
 
@@ -133,64 +59,50 @@
 
     <div class="modal-overlay" id="orderModal">
         <div class="order-modal">
-            <h2>Place Order</h2>
+            <h2 style="color:#FFD700;">Place Order</h2>
             <div id="orderContent"></div>
         </div>
     </div>
-
-    <div id="orderToast" class="toast"></div>
-    <footer style="text-align:center; padding:2rem; background:#000;">© 2025 Foodfight Fast Food</footer>
+    <div id="toast" class="toast"></div>
 
     <script>
-        let allItems = [];
-        let currentUser = null;
-        let selectedItem = null;
-        let selectedSize = null;
-        let userPoints = 0;
-        let appliedDiscount = 0;
-        let discountPointsUsed = 0;
+        let allItems = [], currentUser = null, selectedItem = null, selectedSize = null;
+        let userPoints = 0, appliedDiscount = 0, discountPointsUsed = 0;
         let discountConfig = { pointsToPkr: 1, maxDiscountPercent: 50, minPointsToRedeem: 10 };
-
-        const pizzaSizes = {
-            'Small': { multiplier: 0.7, label: 'Small (6")' },
-            'Medium': { multiplier: 1.0, label: 'Medium (9")' },
-            'Large': { multiplier: 1.4, label: 'Large (12")' },
-            'Extra Large': { multiplier: 1.8, label: 'Extra Large (14")' }
-        };
+        const pizzaSizes = { 'Small':0.7, 'Medium':1, 'Large':1.4, 'Extra Large':1.8 };
 
         function showToast(msg, isErr = false) {
-            const toast = document.getElementById('orderToast');
-            toast.textContent = msg;
-            toast.style.background = isErr ? '#ff4444' : '#FFD700';
-            toast.style.color = isErr ? 'white' : '#0a0a0a';
-            toast.style.display = 'block';
-            setTimeout(() => toast.style.display = 'none', 3000);
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.background = isErr ? '#ff4444' : '#FFD700';
+            t.style.color = isErr ? 'white' : '#0a0a0a';
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
         }
 
-        async function loadDiscountConfig() {
-            try {
-                const { data } = await supabase.from('discount_config').select('*').single();
-                if (data) discountConfig = { ...discountConfig, ...data };
-            } catch(e) { console.log('using default'); }
-        }
-
-        async function loadUserPoints(email) {
-            if (!email) return 0;
-            const { data } = await supabase.from('points_transactions').select('points').eq('user_email', email);
-            const total = data?.reduce((s, t) => s + t.points, 0) || 0;
+        async function loadUserPoints() {
+            if (!currentUser) return 0;
+            const { data } = await supabase.from('points_transactions').select('points').eq('user_email', currentUser.email);
+            const total = data?.reduce((s, t) => s + (t.points || 0), 0) || 0;
             userPoints = total;
             return total;
         }
 
-        async function deductPoints(email, points, reason) {
+        async function deductPoints(points, reason) {
             if (points <= 0) return;
-            await supabase.from('points_transactions').insert([{ user_email: email, points: -points, reason: reason }]);
+            await supabase.from('points_transactions').insert([{ user_email: currentUser.email, points: -points, reason: reason }]);
+            await loadUserPoints();
+        }
+
+        async function loadDiscountConfig() {
+            const { data } = await supabase.from('discount_config').select('*').single();
+            if (data) discountConfig = data;
         }
 
         async function checkSession() {
             const { data: { user } } = await supabase.auth.getUser();
             currentUser = user;
-            if (currentUser) await loadUserPoints(currentUser.email);
+            if (currentUser) await loadUserPoints();
             await loadDiscountConfig();
             await loadMenu();
         }
@@ -204,9 +116,8 @@
 
         function renderFilters() {
             const cats = [...new Set(allItems.map(i => i.category))];
-            const filterBar = document.getElementById('filterBar');
-            filterBar.innerHTML = `<button class="filter-btn active" data-cat="all">ALL</button>` +
-                cats.map(cat => `<button class="filter-btn" data-cat="${cat}">${cat}</button>`).join('');
+            const bar = document.getElementById('filterBar');
+            bar.innerHTML = `<button class="filter-btn active" data-cat="all">ALL</button>` + cats.map(c => `<button class="filter-btn" data-cat="${c}">${c}</button>`).join('');
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -216,30 +127,30 @@
             });
         }
 
-        function renderMenu(category) {
+        function renderMenu(cat) {
             const grid = document.getElementById('menuGrid');
-            let filtered = category === 'all' ? allItems : allItems.filter(i => i.category === category);
-            if (!filtered.length) { grid.innerHTML = '<p style="text-align:center;">No items</p>'; return; }
+            let filtered = cat === 'all' ? allItems : allItems.filter(i => i.category === cat);
+            if (!filtered.length) { grid.innerHTML = '<p>No items</p>'; return; }
             grid.innerHTML = filtered.map(item => `
                 <div class="menu-card">
                     <div class="points-badge">🏆 ${item.points_reward || 10} pts</div>
-                    <img src="${item.image_url || 'https://placehold.co/300x200/111/FFD700?text=Food'}" width="100%" style="border-radius:12px;">
+                    <img src="${item.image_url || 'https://placehold.co/300x200/111/FFD700?text=Food'}" style="width:100%; border-radius:12px;">
                     <h3>${escapeHtml(item.name)}</h3>
                     <p>${escapeHtml(item.description?.substring(0,60) || '')}</p>
                     <div class="price">PKR ${item.price}</div>
-                    <button class="btn-primary" onclick="openOrderModal('${item.id}')">Order Now</button>
+                    <button onclick="openOrder('${item.id}')">Order Now</button>
                 </div>
             `).join('');
         }
 
-        window.openOrderModal = async function(itemId) {
+        window.openOrder = async function(id) {
             if (!currentUser) {
                 showToast('Please login first', true);
                 setTimeout(() => window.location.href = 'account.html', 1500);
                 return;
             }
-            selectedItem = allItems.find(i => i.id === itemId);
-            selectedSize = (selectedItem.category === 'Pizza') ? 'Medium' : null;
+            selectedItem = allItems.find(i => i.id === id);
+            selectedSize = selectedItem.category === 'Pizza' ? 'Medium' : null;
             appliedDiscount = 0;
             discountPointsUsed = 0;
             renderOrderModal();
@@ -247,35 +158,31 @@
         };
 
         function renderOrderModal() {
-            if (!selectedItem) return;
             const isPizza = selectedItem.category === 'Pizza';
             let basePrice = selectedItem.price;
-            if (isPizza && selectedSize) basePrice = Math.round(selectedItem.price * pizzaSizes[selectedSize].multiplier);
-            const finalPrice = Math.max(basePrice - appliedDiscount, 0);
+            if (isPizza && selectedSize) basePrice = Math.round(selectedItem.price * pizzaSizes[selectedSize]);
+            let finalPrice = Math.max(basePrice - appliedDiscount, 0);
 
             let sizeHtml = '';
             if (isPizza) {
                 sizeHtml = `
-                    <label class="order-label">Select Size:</label>
+                    <label class="order-label">Size:</label>
                     <div class="size-selector">
-                        ${Object.entries(pizzaSizes).map(([size, data]) => `
+                        ${Object.entries(pizzaSizes).map(([size, mult]) => `
                             <div class="size-option ${selectedSize === size ? 'selected' : ''}" onclick="selectSize('${size}')">
-                                ${data.label}<br>PKR ${Math.round(selectedItem.price * data.multiplier)}
+                                ${size}<br>PKR ${Math.round(selectedItem.price * mult)}
                             </div>
                         `).join('')}
                     </div>
                 `;
             }
 
-            const maxDiscountPossible = (basePrice * discountConfig.maxDiscountPercent) / 100;
-            const maxPointsUsable = Math.floor(maxDiscountPossible / discountConfig.pointsToPkr);
+            const maxDiscountPkr = (basePrice * discountConfig.maxDiscountPercent) / 100;
+            const maxPointsUsable = Math.floor(maxDiscountPkr / discountConfig.pointsToPkr);
             const canUsePoints = userPoints >= discountConfig.minPointsToRedeem && maxPointsUsable >= discountConfig.minPointsToRedeem;
 
-            const content = `
-                <div>
-                    <h3>${escapeHtml(selectedItem.name)}${isPizza ? ` (${selectedSize})` : ''}</h3>
-                    <p>Price: PKR ${basePrice}</p>
-                </div>
+            document.getElementById('orderContent').innerHTML = `
+                <div><h3>${escapeHtml(selectedItem.name)}${isPizza ? ` (${selectedSize})` : ''}</h3><p>Price: PKR ${basePrice}</p></div>
                 ${sizeHtml}
                 <div class="discount-section">
                     <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
@@ -283,23 +190,22 @@
                         <span class="points-badge-large">🏆 ${userPoints} pts</span>
                     </div>
                     ${canUsePoints ? `
-                        <label class="order-label">Use points (${discountConfig.pointsToPkr} pt = PKR 1, max ${discountConfig.maxDiscountPercent}% off)</label>
+                        <label class="order-label">Redeem points (${discountConfig.pointsToPkr} pt = 1 PKR, max ${discountConfig.maxDiscountPercent}% off)</label>
                         <input type="number" id="pointsToUse" class="order-input" placeholder="Enter points" min="${discountConfig.minPointsToRedeem}" max="${Math.min(userPoints, maxPointsUsable)}">
-                        <button class="btn-primary" onclick="applyDiscount()">Apply Discount</button>
-                    ` : `<p style="color:#aaa;">Not enough points to redeem (minimum ${discountConfig.minPointsToRedeem} pts)</p>`}
-                    ${appliedDiscount > 0 ? `<p style="color:#FFD700; margin-top:8px;">Discount: -PKR ${appliedDiscount} (${discountPointsUsed} pts used)</p><button onclick="removeDiscount()" style="background:#333; color:white; border:none; padding:0.3rem 0.8rem; border-radius:20px;">Remove</button>` : ''}
+                        <button onclick="applyDiscount()">Apply Discount</button>
+                    ` : `<p style="color:#aaa;">Not enough points (min ${discountConfig.minPointsToRedeem})</p>`}
+                    ${appliedDiscount > 0 ? `<p style="color:#FFD700;">Discount: -PKR ${appliedDiscount} (${discountPointsUsed} pts)</p><button onclick="removeDiscount()" style="background:#333;">Remove</button>` : ''}
                 </div>
-                <div><strong>Total to pay: PKR ${finalPrice}</strong></div>
+                <div><strong>Total: PKR ${finalPrice}</strong></div>
                 <label class="order-label">Full Name</label>
                 <input type="text" id="custName" class="order-input" value="${escapeHtml(currentUser?.user_metadata?.full_name || '')}">
                 <label class="order-label">Phone</label>
                 <input type="text" id="custPhone" class="order-input" value="${escapeHtml(currentUser?.user_metadata?.phone || '')}">
                 <label class="order-label">Address</label>
                 <textarea id="custAddress" class="order-input" rows="2">${escapeHtml(currentUser?.user_metadata?.address || '')}</textarea>
-                <button class="btn-primary" onclick="placeOrder(${finalPrice}, ${basePrice})">Confirm Order</button>
-                <button class="btn-primary" style="background:#333; margin-top:0.5rem;" onclick="closeOrderModal()">Cancel</button>
+                <button onclick="placeOrder(${finalPrice}, ${basePrice})">Confirm Order</button>
+                <button onclick="closeOrderModal()" style="background:#333;">Cancel</button>
             `;
-            document.getElementById('orderContent').innerHTML = content;
         }
 
         window.selectSize = function(size) {
@@ -314,7 +220,7 @@
             if (!pointsInput) return;
             let points = parseInt(pointsInput.value);
             if (isNaN(points) || points < discountConfig.minPointsToRedeem) {
-                showToast(`Minimum ${discountConfig.minPointsToRedeem} points required`, true);
+                showToast(`Minimum ${discountConfig.minPointsToRedeem} points`, true);
                 return;
             }
             if (points > userPoints) {
@@ -323,13 +229,11 @@
             }
             const isPizza = selectedItem.category === 'Pizza';
             let basePrice = selectedItem.price;
-            if (isPizza && selectedSize) basePrice = Math.round(selectedItem.price * pizzaSizes[selectedSize].multiplier);
+            if (isPizza && selectedSize) basePrice = Math.round(selectedItem.price * pizzaSizes[selectedSize]);
             const maxDiscount = (basePrice * discountConfig.maxDiscountPercent) / 100;
-            const discountAmount = Math.min(points * discountConfig.pointsToPkr, maxDiscount, basePrice - 10);
-            if (discountAmount <= 0) {
-                showToast('Discount would be zero or exceeds limit', true);
-                return;
-            }
+            let discountAmount = points * discountConfig.pointsToPkr;
+            if (discountAmount > maxDiscount) discountAmount = maxDiscount;
+            if (discountAmount <= 0) { showToast('Discount invalid', true); return; }
             appliedDiscount = discountAmount;
             discountPointsUsed = points;
             renderOrderModal();
@@ -345,31 +249,19 @@
             const name = document.getElementById('custName')?.value.trim();
             const phone = document.getElementById('custPhone')?.value.trim();
             const address = document.getElementById('custAddress')?.value.trim();
-            if (!name || !phone || !address) {
-                showToast('Please fill all fields', true);
-                return;
-            }
+            if (!name || !phone || !address) { showToast('Fill all fields', true); return; }
 
             const isPizza = selectedItem.category === 'Pizza';
-            let itemName = selectedItem.name;
-            if (isPizza && selectedSize) itemName += ` (${selectedSize})`;
+            let itemName = selectedItem.name + (isPizza && selectedSize ? ` (${selectedSize})` : '');
+            const itemsOrdered = [{ id: selectedItem.id, name: itemName, price: originalPrice, qty: 1, size: selectedSize || null }];
 
-            const itemsOrdered = [{
-                id: selectedItem.id,
-                name: itemName,
-                price: originalPrice,
-                qty: 1,
-                size: selectedSize || null
-            }];
-
-            // Deduct points only if discount was applied
+            // Deduct points only if discount was applied and points>0
             if (discountPointsUsed > 0) {
-                await deductPoints(currentUser.email, discountPointsUsed, `Used ${discountPointsUsed} points for discount on ${selectedItem.name}`);
-                // Refresh points after deduction
-                await loadUserPoints(currentUser.email);
+                await deductPoints(discountPointsUsed, `Used ${discountPointsUsed} points for discount on ${selectedItem.name}`);
             }
 
-            const { error } = await supabase.from('orders').insert([{
+            // Insert order with explicit values (never null)
+            const { error } = await supabase.from('orders').insert({
                 customer_name: name,
                 customer_phone: phone,
                 customer_email: currentUser.email,
@@ -380,13 +272,9 @@
                 points_used: discountPointsUsed,
                 total_price: finalPrice,
                 status: 'Pending'
-            }]);
+            });
 
-            if (error) {
-                console.error(error);
-                showToast('Order failed: ' + error.message, true);
-                return;
-            }
+            if (error) { showToast('Order failed: ' + error.message, true); return; }
             showToast(`Order placed! PKR ${finalPrice}`);
             closeOrderModal();
         };
