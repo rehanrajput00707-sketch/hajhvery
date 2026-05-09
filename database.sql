@@ -168,3 +168,8 @@ INSERT INTO treasure_codes (code, title, points_value, reward_description)
 VALUES 
 ('RANDOM' || floor(random()*10000), 'Weekend Special', 80, 'Free Upgrade'),
 ('HUNT' || floor(random()*9999), 'Late Night Deal', 120, '20% Off Next Order');
+
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS original_price integer;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_amount integer DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS points_used integer DEFAULT 0;
+
