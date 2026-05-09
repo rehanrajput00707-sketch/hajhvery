@@ -173,3 +173,18 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS original_price integer;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_amount integer DEFAULT 0;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS points_used integer DEFAULT 0;
 
+-- Make sure orders table has all required columns
+CREATE TABLE IF NOT EXISTS orders (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    customer_name text,
+    customer_phone text,
+    customer_email text,
+    customer_address text,
+    items_ordered jsonb,
+    total_price integer,
+    original_price integer,
+    discount_amount integer DEFAULT 0,
+    points_used integer DEFAULT 0,
+    status text DEFAULT 'Pending',
+    created_at timestamptz DEFAULT now()
+);
