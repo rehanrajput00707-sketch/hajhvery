@@ -148,3 +148,40 @@ ALTER TABLE points_transactions DISABLE ROW LEVEL SECURITY;
 ALTER TABLE discount_config DISABLE ROW LEVEL SECURITY;
 ALTER TABLE treasure_codes DISABLE ROW LEVEL SECURITY;
 ALTER TABLE treasure_redemptions DISABLE ROW LEVEL SECURITY;
+
+-- First, back up existing orders if any, then recreate table with correct columns
+CREATE TABLE IF NOT EXISTS orders_backup AS SELECT * FROM orders;
+
+DROP TABLE IF EXISTS orders;
+
+CREATE TABLE orders (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    customer_name text,
+    customer_phone text,
+    customer_email text,
+    customer_address text,
+    items_ordered jsonb,
+    total_price integer,
+    original_price integer DEFAULT 0,
+    discount_amount integer DEFAULT 0,
+    points_used integer DEFAULT 0,
+    status text DEFAULT 'Pending',
+    created_at timestamptz DEFAULT now()
+);
+
+-- Re-insert any existing orders from backup
+INSERT INTO orders (id, customer_name, customer_phone, customer_email, customer_address, items_ordered, total_price, status, created_at)
+SELECT id, customer_name, customer_phone, customer_email, customer_address, items_ordered, total_price, status, created_at
+FROM orders_backup
+ON CONFLICT DO NOTHING;
+
+-- Ensure discount_config exists and has correct values
+CREATE TABLE IF NOT EXISTS discount_config (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    points_to_pkr integer DEFAULT 1,
+    max_discount_percent integer DEFAULT 50,
+    min_points_to_redeem integer DEFAULT 10
+);
+INSERT INTO discount_config (points_to_pkr, max_discount_percent, min_points_to_redeem)
+VALUES (1, 50, 10)
+ON CONFLICT (id) DO NOTHING;
