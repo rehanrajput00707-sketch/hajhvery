@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ThreadVault - Unstitched Fabric</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {  background: linear-gradient(135deg, #fcfcfc 0%, #1a1a1a 100%); font-family: 'Poppins', sans-serif; color: white; }
+        .navbar { background: #c7c5c58f; padding: 1rem 2rem; border-bottom: 2px solid #FFD700; }
+        .nav-container { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: auto; }
+        .logo { font-family: 'Bebas Neue', cursive; color: #000000f2; font-size: 2rem; letter-spacing: 1px; }
+        .nav-links { display: flex; gap: 2rem; list-style: none; }
+        .nav-links a { color: rgb(0, 0, 0); text-decoration: none; transition: 0.3s; font-weight: 500; }
+        .nav-links a:hover, .nav-links a.active { color: #FFD700; }
+        .hamburger { display: none; font-size: 1.5rem; cursor: pointer; color: #FFD700; }
+        
+        /* ===== FILTER BUTTONS: SMALL & COMPACT (short width, rounded) ===== */
+        .filter-bar {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin: 2rem auto 1.5rem auto;
+            padding: 0 0.8rem;
+        }
+        .filter-btn {
+            background: #99969693;
+            border: 1px solid #333;
+            padding: 0.3rem 0.9rem;   /* reduced horizontal padding = shorter length */
+            border-radius: 40px;
+            color: #030303;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            font-size: 0.78rem;
+            letter-spacing: 0.3px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .filter-btn.active {
+            background: #657fbc88;
+            color: #0a0a0a;
+            border-color: #FFD700;
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+        }
+        .filter-btn:hover {
+            background: #2a2a2a;
+            border-color: #000000;
+            color: #fcfcfb;
+        }
+        
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: auto;
+        }
+        .menu-card {
+            background: #4e4e4e7c;
+            border-radius: 24px;
+            padding: 1rem;
+            position: relative;
+            border: 1px solid #2a2a2a;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .menu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(0,0,0,0.5);
+            border-color: #FFD700;
+        }
+        .points-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: #FFD700;
+            color: #000;
+            padding: 4px 10px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        .price { color: #FFD700; font-weight: bold; margin: 0.5rem 0; font-size: 1.2rem; }
+        button { background:  #ffffff7a; color: #0a0a0a; border: none; padding: 0.7rem; border-radius: 40px; cursor: pointer; font-weight: bold; margin-top: 0.5rem; transition: 0.2s; font-family: 'Poppins', sans-serif; }
+        button:hover { background:#f3131380; transform: scale(0.98); }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal-overlay.open { display: flex; }
+        .order-modal { background: #4e4e4e7c; border: 2px solid #FFD700; border-radius: 28px; padding: 2rem; width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 35px rgba(0,0,0,0.5); }
+        .order-modal h2 { font-family: 'Bebas Neue', cursive; letter-spacing: 1px; }
+        .order-input { width: 100%; padding: 0.8rem; background: #222; border: 1px solid #444; border-radius: 20px; color: white; margin-bottom: 1rem; font-family: 'Poppins', sans-serif; }
+        .order-label { display: block; color: #FFD700; margin-bottom: 0.4rem; font-weight: 500; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .meter-selector { display: flex; gap: 0.7rem; flex-wrap: wrap; margin-bottom: 1.2rem; align-items: center; }
+        .meter-option { background: #222; border: 1px solid #555; border-radius: 60px; padding: 0.5rem 1rem; text-align: center; cursor: pointer; font-weight: 500; transition: 0.1s; min-width: 70px; }
+        .meter-option.selected { background: #FFD700; color: #0a0a0a; border-color: #FFD700; }
+        .discount-section { background: #1a1a1a; border-radius: 20px; padding: 1rem; margin: 1rem 0; border-left: 3px solid #FFD700; }
+        .points-badge-large { background: #FFD700; color: #0a0a0a; padding: 0.3rem 1rem; border-radius: 40px; font-weight: bold; font-size: 0.85rem; }
+        .toast { position: fixed; bottom: 25px; right: 25px; background: #FFD700; color: #000; padding: 12px 28px; border-radius: 60px; display: none; z-index: 2000; font-weight: 600; box-shadow: 0 5px 12px black; }
+        @media (max-width: 768px) { .nav-links { display: none; flex-direction: column; background: #0a0a0a; position: absolute; top: 70px; left: 0; width: 100%; padding: 1rem; border-bottom: 2px solid #FFD700; gap: 1rem; z-index: 99; } .nav-links.active { display: flex; } .hamburger { display: block; } .menu-grid { padding: 1rem; gap: 1.2rem; } .filter-btn { padding: 0.25rem 0.7rem; font-size: 0.7rem; } }
+        img { object-fit: cover; height: 220px; width: 100%; border-radius: 18px; background: #1f1f1f; }
+        .fabric-tag { font-size: 0.7rem; background: #1f1f1f; display: inline-block; padding: 2px 12px; border-radius: 30px; color: #FFD700; margin-top: 6px; letter-spacing: 0.3px; }
+        .gms-badge { font-size: 0.7rem; color: #aaa; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">Cloth shop</div>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="article.html" class="active">article</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li><a href="account.html">Account</a></li>
+            </ul>
+            <div class="hamburger" id="hamburger">☰</div>
+        </div>
+    </nav>
+
+    <!-- Filter bar with compact, short buttons (small length) -->
+    <div class="filter-bar" id="filterBar"></div>
+    <div class="menu-grid" id="menuGrid">Loading premium unstitched fabrics...</div>
+
+    <div class="modal-overlay" id="orderModal">
+        <div class="order-modal">
+            <h2 style="color:#FFD700;">✤ Order Fabric (Unstitched)</h2>
+            <div id="orderContent"></div>
+        </div>
+    </div>
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // ---------------------------------------------------------------
+        // UNSTITCHED CLOTH SHOP — NO READYMADE GARMENTS, ONLY FABRIC BY METER
+        // ---------------------------------------------------------------
+        let allFabrics = [], currentUser = null, selectedFabric = null, selectedMeters = 3;  // default 3 meters
+        let userPoints = 0, appliedDiscount = 0, discountPointsUsed = 0;
+        let discountConfig = { pointsToPkr: 1, maxDiscountPercent: 50, minPointsToRedeem: 10 };
+        
+        // Available meter quantities for unstitched fabric (customer chooses length)
+        const meterOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        
+        function showToast(msg, isErr = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.background = isErr ? '#d32f2f' : '#FFD700';
+            t.style.color = isErr ? 'white' : '#0a0a0a';
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
+
+        // Supabase user & points logic
+        async function loadUserPoints() {
+            if (!currentUser) return 0;
+            try {
+                const { data } = await supabase.from('points_transactions').select('points').eq('user_email', currentUser.email);
+                const total = data?.reduce((s, t) => s + (t.points || 0), 0) || 0;
+                userPoints = total;
+                return total;
+            } catch(e) { console.warn(e); return 0; }
+        }
+
+        async function deductPoints(points, reason) {
+            if (points <= 0) return;
+            await supabase.from('points_transactions').insert([{ user_email: currentUser.email, points: -points, reason: reason }]);
+            await loadUserPoints();
+        }
+
+        async function loadDiscountConfig() {
+            try {
+                const { data } = await supabase.from('discount_config').select('*').single();
+                if (data) discountConfig = data;
+            } catch(e) { console.warn("default discount config active"); }
+        }
+
+        async function checkSession() {
+            const { data: { user } } = await supabase.auth.getUser();
+            currentUser = user;
+            if (currentUser) await loadUserPoints();
+            await loadDiscountConfig();
+            await loadUnstitchedFabrics();
+        }
+
+        // ---------- UNSTITCHED FABRIC CATALOG (no ready-made clothes, only fabric rolls) ----------
+        async function loadUnstitchedFabrics() {
+            // Try fetching from Supabase, if empty or error use complete fabric collection
+            let { data, error } = await supabase.from('menu_items').select('*').eq('is_available', true);
+            
+            // Filter out any existing ready-made items (defensive: only keep fabric-like items)
+            if (data && data.length) {
+                const fabricKeywords = ['lawn', 'silk', 'cotton', 'linen', 'chiffon', 'velvet', 'jersey', 'organza', 'fabric', 'unstitched', 'meter', 'roll'];
+                data = data.filter(item => {
+                    const name = (item.name || '').toLowerCase();
+                    const desc = (item.description || '').toLowerCase();
+                    const cat = (item.category || '').toLowerCase();
+                    return fabricKeywords.some(kw => name.includes(kw) || desc.includes(kw) || cat.includes(kw)) || item.category?.match(/fabric|unstitched|lawn|silk/i);
+                });
+            }
+            
+            if (error || !data || data.length === 0) {
+                // Premium unstitched fabric collection — pure fabrics by meter
+                const fabricCatalog = [
+                    { id: "fab_1", name: "Pure Lawn (Summer Breeze)", description: "Premium Egyptian cotton lawn, breathable, perfect for summer unstitched suits.", price_per_meter: 850, category: "Lawn", image_url: "https://placehold.co/600x400/1a2a1a/FFD700?text=LAWN+FABRIC", points_reward: 15, is_available: true, gsm: "120gsm" },
+                    { id: "fab_2", name: "Raw Silk (Charmeuse)", description: "Luxurious raw silk with natural sheen, unstitched drape fabric.", price_per_meter: 2450, category: "Silk", image_url: "https://placehold.co/600x400/2a1a1a/FFD700?text=SILK+FABRIC", points_reward: 35, is_available: true, gsm: "90gsm" },
+                    { id: "fab_3", name: "Soft Cotton Voile", description: "Lightweight, airy cotton voile, ideal for daily wear kurtis.", price_per_meter: 590, category: "Cotton", image_url: "https://placehold.co/600x400/1a2a2a/FFD700?text=COTTON+VOILE", points_reward: 10, is_available: true, gsm: "110gsm" },
+                    { id: "fab_4", name: "Linen Blend (Earth Tone)", description: "Breathable linen-cotton blend, textured finish, unstitched fabric by meter.", price_per_meter: 1290, category: "Linen", image_url: "https://placehold.co/600x400/2a2a1a/FFD700?text=LINEN+BLEND", points_reward: 20, is_available: true, gsm: "140gsm" },
+                    { id: "fab_5", name: "Digital Printed Chiffon", description: "Flowing chiffon with floral digital print, perfect for dupattas or unstitched suits.", price_per_meter: 990, category: "Chiffon", image_url: "https://placehold.co/600x400/1a1a2a/FFD700?text=CHIFFON", points_reward: 18, is_available: true, gsm: "70gsm" },
+                    { id: "fab_6", name: "Velvet (Crimson Red)", description: "Soft crushed velvet, luxurious drape, unstitched fabric for evening wear.", price_per_meter: 2190, category: "Velvet", image_url: "https://placehold.co/600x400/2a1a2a/FFD700?text=VELVET", points_reward: 30, is_available: true, gsm: "200gsm" },
+                    { id: "fab_7", name: "Organic Cotton Jersey", description: "Stretchable organic cotton jersey, unstitched, ideal for casual tops.", price_per_meter: 750, category: "Cotton", image_url: "https://placehold.co/600x400/1a2a2a/FFD700?text=JERSEY+COTTON", points_reward: 14, is_available: true, gsm: "150gsm" },
+                    { id: "fab_8", name: "Embroidered Lawn (Festive)", description: "Delicate embroidery on premium lawn, unstitched 2.5m width.", price_per_meter: 1850, category: "Lawn", image_url: "https://placehold.co/600x400/2a2a1a/FFD700?text=EMBROIDERED+LAWN", points_reward: 28, is_available: true, gsm: "125gsm" }
+                ];
+                allFabrics = fabricCatalog;
+            } else {
+                allFabrics = data;
+            }
+            renderFilters();
+            renderFabricGrid('all');
+        }
+
+        function renderFilters() {
+            const categories = [...new Set(allFabrics.map(i => i.category))];
+            const filterBar = document.getElementById('filterBar');
+            filterBar.innerHTML = `<button class="filter-btn active" data-cat="all">ALL</button>` + 
+                categories.map(cat => `<button class="filter-btn" data-cat="${cat}">${cat}</button>`).join('');
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    renderFabricGrid(btn.dataset.cat);
+                });
+            });
+        }
+
+        function renderFabricGrid(category) {
+            const grid = document.getElementById('menuGrid');
+            let filtered = category === 'all' ? allFabrics : allFabrics.filter(i => i.category === category);
+            if (!filtered.length) {
+                grid.innerHTML = '<div style="text-align:center; padding:3rem; color:#aaa;">✦ No fabrics in this category ✦</div>';
+                return;
+            }
+            grid.innerHTML = filtered.map(fabric => `
+                <div class="menu-card">
+                    <div class="points-badge">🏆 ${fabric.points_reward || 12} pts/mtr</div>
+                    <img src="${fabric.image_url || 'https://placehold.co/600x400/222/FFD700?text=UNSTITCHED+FABRIC'}" alt="${escapeHtml(fabric.name)}">
+                    <h3 style="margin-top: 12px;">${escapeHtml(fabric.name)}</h3>
+                    <div class="fabric-tag">${escapeHtml(fabric.category)}</div>
+                    <div class="gms-badge">📏 ${fabric.gsm || 'premium quality'} | unstitched</div>
+                    <p style="font-size: 0.85rem; margin: 8px 0; opacity:0.8;">${escapeHtml(fabric.description?.substring(0, 70) || 'Pure fabric by meter, no stitching')}</p>
+                    <div class="price">₨ ${fabric.price_per_meter}/meter</div>
+                    <button onclick="openFabricOrder('${fabric.id}')">Order by Meter →</button>
+                </div>
+            `).join('');
+        }
+
+        // Open order modal for unstitched fabric
+        window.openFabricOrder = async function(id) {
+            if (!currentUser) {
+                showToast('Please login to your account first', true);
+                setTimeout(() => window.location.href = 'account.html', 1500);
+                return;
+            }
+            selectedFabric = allFabrics.find(i => i.id === id);
+            selectedMeters = 3;  // default 3 meters
+            appliedDiscount = 0;
+            discountPointsUsed = 0;
+            renderFabricOrderModal();
+            document.getElementById('orderModal').classList.add('open');
+        };
+
+        function renderFabricOrderModal() {
+            let pricePerMeter = selectedFabric.price_per_meter;
+            let totalBasePrice = pricePerMeter * selectedMeters;
+            let finalPrice = Math.max(totalBasePrice - appliedDiscount, 0);
+            
+            // Build meter selector (small compact buttons)
+            let meterHtml = `
+                <label class="order-label">📏 Quantity (Meters) — Unstitched Fabric</label>
+                <div class="meter-selector">
+                    ${meterOptions.map(m => `
+                        <div class="meter-option ${selectedMeters === m ? 'selected' : ''}" onclick="selectMeters(${m})">
+                            ${m}m
+                        </div>
+                    `).join('')}
+                </div>
+                <p style="font-size:0.8rem; margin-bottom:12px; color:#ccc;">Total length: ${selectedMeters} meters × ₨ ${pricePerMeter} = ₨ ${totalBasePrice}</p>
+            `;
+            
+            const maxDiscountPkr = (totalBasePrice * discountConfig.maxDiscountPercent) / 100;
+            const maxPointsUsable = Math.floor(maxDiscountPkr / discountConfig.pointsToPkr);
+            const canUsePoints = userPoints >= discountConfig.minPointsToRedeem && maxPointsUsable >= discountConfig.minPointsToRedeem;
+            
+            document.getElementById('orderContent').innerHTML = `
+                <div style="margin-bottom: 15px;">
+                    <h3 style="color:#FFD700;">${escapeHtml(selectedFabric.name)}</h3>
+                    <p>Category: ${escapeHtml(selectedFabric.category)} | unstitched pure fabric</p>
+                </div>
+                ${meterHtml}
+                <div class="discount-section">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                        <span>💎 Your Reward Points:</span>
+                        <span class="points-badge-large">🏆 ${userPoints} pts</span>
+                    </div>
+                    ${canUsePoints ? `
+                        <label class="order-label">🎟️ Redeem points (${discountConfig.pointsToPkr} pt = 1 PKR, max ${discountConfig.maxDiscountPercent}% off)</label>
+                        <input type="number" id="pointsToUse" class="order-input" placeholder="Enter points" min="${discountConfig.minPointsToRedeem}" max="${Math.min(userPoints, maxPointsUsable)}">
+                        <button onclick="applyFabricDiscount(${totalBasePrice})" style="background:#FFD700; margin-top:5px;">Apply Discount</button>
+                    ` : `<p style="color:#aaa;">⭐ Minimum ${discountConfig.minPointsToRedeem} points required to redeem</p>`}
+                    ${appliedDiscount > 0 ? `<p style="color:#FFD700; margin-top:10px;">✨ Discount -₨ ${appliedDiscount} (used ${discountPointsUsed} pts)</p><button onclick="removeFabricDiscount()" style="background:#333; margin-top:6px;">Remove</button>` : ''}
+                </div>
+                <div style="font-size:1.3rem; font-weight:bold; margin: 0.7rem 0;">🧾 Total: ₨ ${finalPrice}</div>
+                <label class="order-label">👤 Full Name</label>
+                <input type="text" id="custName" class="order-input" value="${escapeHtml(currentUser?.user_metadata?.full_name || '')}" placeholder="Full name">
+                <label class="order-label">📞 Phone Number</label>
+                <input type="text" id="custPhone" class="order-input" value="${escapeHtml(currentUser?.user_metadata?.phone || '')}" placeholder="03xx 1234567">
+                <label class="order-label">🏠 Delivery Address</label>
+                <textarea id="custAddress" class="order-input" rows="2" placeholder="House#, Street, City">${escapeHtml(currentUser?.user_metadata?.address || '')}</textarea>
+                <button onclick="placeFabricOrder(${finalPrice}, ${totalBasePrice})">✅ Confirm Order (Unstitched)</button>
+                <button onclick="closeOrderModal()" style="background:#1f1f1f; margin-top:10px;">Cancel</button>
+            `;
+        }
+        
+        window.selectMeters = function(meters) {
+            selectedMeters = meters;
+            appliedDiscount = 0;
+            discountPointsUsed = 0;
+            renderFabricOrderModal();
+        };
+        
+        window.applyFabricDiscount = function(totalBasePrice) {
+            const pointsInput = document.getElementById('pointsToUse');
+            if (!pointsInput) return;
+            let points = parseInt(pointsInput.value);
+            if (isNaN(points) || points < discountConfig.minPointsToRedeem) {
+                showToast(`Minimum ${discountConfig.minPointsToRedeem} points required`, true);
+                return;
+            }
+            if (points > userPoints) {
+                showToast(`You have only ${userPoints} points`, true);
+                return;
+            }
+            const maxDiscountAllowed = (totalBasePrice * discountConfig.maxDiscountPercent) / 100;
+            let discountAmount = points * discountConfig.pointsToPkr;
+            if (discountAmount > maxDiscountAllowed) discountAmount = maxDiscountAllowed;
+            if (discountAmount <= 0) { showToast('Invalid discount amount', true); return; }
+            appliedDiscount = discountAmount;
+            discountPointsUsed = points;
+            renderFabricOrderModal();
+        };
+        
+        window.removeFabricDiscount = function() {
+            appliedDiscount = 0;
+            discountPointsUsed = 0;
+            renderFabricOrderModal();
+        };
+        
+        window.placeFabricOrder = async function(finalPrice, totalBasePrice) {
+            const name = document.getElementById('custName')?.value.trim();
+            const phone = document.getElementById('custPhone')?.value.trim();
+            const address = document.getElementById('custAddress')?.value.trim();
+            if (!name || !phone || !address) {
+                showToast('Please fill all fields (name, phone, address)', true);
+                return;
+            }
+            
+            const orderedItem = {
+                id: selectedFabric.id,
+                name: `${selectedFabric.name} (Unstitched)`,
+                price_per_meter: selectedFabric.price_per_meter,
+                meters: selectedMeters,
+                total_base: totalBasePrice,
+                category: selectedFabric.category,
+                fabric_type: "unstitched"
+            };
+            
+            // Deduct points if used
+            if (discountPointsUsed > 0) {
+                await deductPoints(discountPointsUsed, `Used ${discountPointsUsed} points on fabric: ${selectedFabric.name}`);
+            }
+            
+            // Earn loyalty points per meter (reward points = points_reward * meters)
+            const earnedPoints = (selectedFabric.points_reward || 10) * selectedMeters;
+            if (earnedPoints > 0 && finalPrice > 0) {
+                await supabase.from('points_transactions').insert([{
+                    user_email: currentUser.email,
+                    points: earnedPoints,
+                    reason: `Earned ${earnedPoints} points for buying ${selectedMeters}m of ${selectedFabric.name}`
+                }]);
+                await loadUserPoints();
+                showToast(`🎉 +${earnedPoints} loyalty points earned!`);
+            }
+            
+            const { error } = await supabase.from('orders').insert({
+                customer_name: name,
+                customer_phone: phone,
+                customer_email: currentUser.email,
+                customer_address: address,
+                items_ordered: [orderedItem],
+                original_price: totalBasePrice,
+                discount_amount: appliedDiscount,
+                points_used: discountPointsUsed,
+                total_price: finalPrice,
+                status: 'Pending',
+                order_type: 'unstitched_fabric'
+            });
+            
+            if (error) {
+                console.error(error);
+                showToast('Order failed: ' + error.message, true);
+                return;
+            }
+            showToast(`✔ Fabric order placed! ₨ ${finalPrice} for ${selectedMeters} meters. Unstitched fabric will be shipped.`);
+            closeOrderModal();
+        };
+        
+        function closeOrderModal() {
+            document.getElementById('orderModal').classList.remove('open');
+            selectedFabric = null;
+            selectedMeters = 3;
+            appliedDiscount = 0;
+            discountPointsUsed = 0;
+        }
+        
+        function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); }
+        
+        // Mobile menu toggle
+        document.getElementById('hamburger')?.addEventListener('click', () => {
+            const nav = document.getElementById('navLinks');
+            if (nav) nav.classList.toggle('active');
+        });
+        window.closeOrderModal = closeOrderModal;
+        
+        checkSession();
+    </script>
+</body>
+</html>

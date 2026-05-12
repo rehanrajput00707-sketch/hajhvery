@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Foodfight Admin | Complete Control + Points Discount</title>
+    <title>ThreadVault Admin | Fabric Management</title>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -60,45 +60,8 @@
         .btn-edit { background: #FFD700; color: #000000; border: none; padding: 0.3rem 0.8rem; border-radius: 1rem; cursor: pointer; margin-right: 0.5rem; }
         .btn-danger { background: #dc2626; color: white; border: none; padding: 0.3rem 0.8rem; border-radius: 1rem; cursor: pointer; }
 
-        /* DISCOUNT CONFIG SECTION */
-        .discount-config-card {
-            background: #111;
-            border: 1px solid #FFD700;
-            border-radius: 1rem;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .discount-config-card h3 {
-            color: #FFD700;
-            margin-bottom: 1rem;
-        }
-        .config-row {
-            display: flex;
-            gap: 1.5rem;
-            flex-wrap: wrap;
-            margin-bottom: 1rem;
-        }
-        .config-field {
-            flex: 1;
-            min-width: 150px;
-        }
-        .config-field label {
-            color: #FFD700;
-            display: block;
-            font-size: 0.8rem;
-            margin-bottom: 0.3rem;
-        }
-        .config-field input {
-            width: 100%;
-            padding: 0.5rem;
-            background: #1e1e1e;
-            border: 1px solid #333;
-            border-radius: 0.5rem;
-            color: white;
-        }
-
-        /* SIZE BADGE */
-        .size-badge {
+        /* METER BADGE */
+        .meter-badge {
             display: inline-block;
             background: #FFD700;
             color: #0a0a0a;
@@ -148,7 +111,7 @@
     <div class="login-card">
         <div class="login-icon"><i class="fas fa-lock"></i></div>
         <h1>ADMIN ACCESS</h1>
-        <div class="input-field"><label><i class="fas fa-user"></i> Username</label><input type="text" id="adminUser" placeholder="food"></div>
+        <div class="input-field"><label><i class="fas fa-user"></i> Username</label><input type="text" id="adminUser" placeholder="cloth"></div>
         <div class="input-field"><label><i class="fas fa-key"></i> Password</label><input type="password" id="adminPass" placeholder="••••••••"></div>
         <button class="login-btn" onclick="attemptLogin()"><i class="fas fa-sign-in-alt"></i> Login</button>
         <div id="loginFeedback" class="error-msg"></div>
@@ -158,74 +121,37 @@
 <!-- MAIN ADMIN PANEL -->
 <div id="adminPanel" class="admin-panel">
     <div class="admin-header">
-        <h1><i class="fas fa-crown"></i> Foodfight · ADMIN</h1>
+        <h1><i class="fas fa-cut"></i> THREADVAULT · ADMIN</h1>
         <div class="admin-user"><span id="adminNameSpan">Admin</span><button class="logout-btn" onclick="logout()"><i class="fas fa-power-off"></i> Exit</button></div>
     </div>
     <div class="admin-layout">
         <div class="sidebar">
             <button onclick="switchSection('dashboard')" id="btnDash" class="active"><i class="fas fa-chart-line"></i> Dashboard</button>
-            <button onclick="switchSection('discount')" id="btnDiscount"><i class="fas fa-percent"></i> Points Discount</button>
-            <button onclick="switchSection('menu')" id="btnMenu"><i class="fas fa-hamburger"></i> Menu Items</button>
-            <button onclick="switchSection('orders')" id="btnOrders"><i class="fas fa-shopping-cart"></i> Orders</button>
-            <button onclick="switchSection('missions')" id="btnMissions"><i class="fas fa-calendar-day"></i> Daily Mission</button>
-            <button onclick="switchSection('codes')" id="btnCodes"><i class="fas fa-receipt"></i> Receipt Codes</button>
+            <button onclick="switchSection('menu')" id="btnMenu"><i class="fas fa-cut"></i> Fabric Catalog</button>
+            <button onclick="switchSection('orders')" id="btnOrders"><i class="fas fa-shopping-cart"></i> Fabric Orders</button>
         </div>
         <div class="main-content">
             <!-- DASHBOARD -->
             <div id="dashboardSection" class="section active">
                 <h2>📊 Dashboard</h2>
                 <div class="stats-grid">
-                    <div class="stat-card"><h3>🍽️ Menu Items</h3><div class="value" id="statItems">0</div></div>
+                    <div class="stat-card"><h3>🧵 Fabric Items</h3><div class="value" id="statItems">0</div></div>
                     <div class="stat-card"><h3>📦 Total Orders</h3><div class="value" id="statOrders">0</div></div>
                     <div class="stat-card"><h3>💰 Revenue (PKR)</h3><div class="value" id="statRevenue">0</div></div>
-                    <div class="stat-card"><h3>🎮 Game Plays</h3><div class="value" id="statGames">0</div></div>
                 </div>
             </div>
 
-            <!-- POINTS DISCOUNT CONFIGURATION -->
-            <div id="discountSection" class="section">
-                <h2>🎯 Points Discount Configuration</h2>
-                <div class="discount-config-card">
-                    <h3><i class="fas fa-sliders-h"></i> Discount Rules</h3>
-                    <div class="config-row">
-                        <div class="config-field">
-                            <label>Points to PKR Value</label>
-                            <input type="number" id="pointsToPkr" value="1" min="1" step="1">
-                            <small style="color:#aaa;">1 point = ? PKR</small>
-                        </div>
-                        <div class="config-field">
-                            <label>Max Discount (%)</label>
-                            <input type="number" id="maxDiscountPercent" value="50" min="1" max="100">
-                            <small style="color:#aaa;">Maximum % off per order</small>
-                        </div>
-                        <div class="config-field">
-                            <label>Min Points to Redeem</label>
-                            <input type="number" id="minPointsToRedeem" value="10" min="1">
-                            <small style="color:#aaa;">Minimum points required</small>
-                        </div>
-                    </div>
-                    <button class="btn-primary" onclick="saveDiscountConfig()"><i class="fas fa-save"></i> Save Discount Settings</button>
-                </div>
-                <div class="discount-config-card">
-                    <h3><i class="fas fa-info-circle"></i> How It Works</h3>
-                    <p style="color:#ccc; font-size:0.9rem;">• Customers earn points from games and receipt codes</p>
-                    <p style="color:#ccc; font-size:0.9rem;">• During checkout, they can redeem points for discount</p>
-                    <p style="color:#ccc; font-size:0.9rem;">• Formula: <strong>Discount = Points × (Points to PKR Value)</strong></p>
-                    <p style="color:#ccc; font-size:0.9rem;">• Max discount cannot exceed <span id="displayMaxPercent">50</span>% of order total</p>
-                </div>
-            </div>
-
-            <!-- MENU MANAGEMENT -->
+            <!-- FABRIC CATALOG MANAGEMENT -->
             <div id="menuSection" class="section">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;"><h2>🍔 Menu Catalog</h2><button class="btn-primary" onclick="openItemModal()"><i class="fas fa-plus"></i> Add New Item</button></div>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;"><h2>🧵 Fabric Catalog (Unstitched)</h2><button class="btn-primary" onclick="openItemModal()"><i class="fas fa-plus"></i> Add New Fabric</button></div>
                 <div style="margin: 1rem 0; display: flex; gap: 0.5rem; flex-wrap: wrap;" id="categoryFilters"></div>
-                <table class="admin-table"><thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Points</th><th>Status</th><th>Actions</th></tr></thead><tbody id="menuTableBody"><tr><td colspan="7">Loading...</td></tr></tbody>
+                <table class="admin-table"><thead><tr><th>Image</th><th>Fabric Name</th><th>Category</th><th>Price/Meter</th><th>Status</th><th>Actions</th></thead><tbody id="menuTableBody"><td><td colspan="6">Loading fabrics...</td></tr></tbody>
                 </table>
             </div>
 
-            <!-- ORDERS (WITH SIZE TRACKING) -->
+            <!-- ORDERS (WITH METER TRACKING) -->
             <div id="ordersSection" class="section">
-                <h2>📦 Orders with Size Details</h2>
+                <h2>📦 Fabric Orders (by Meter)</h2>
                 <div><label style="color:#FFD700;">Filter by date:</label><input type="date" id="orderFilterDate" onchange="fetchOrders()" style="background:#222; color:white; border:1px solid #FFD700; padding:0.3rem; border-radius:8px; margin-left:1rem;"></div>
                 <table class="admin-table">
                     <thead>
@@ -233,59 +159,33 @@
                             <th>ID</th>
                             <th>Customer</th>
                             <th>Phone</th>
-                            <th>Items (Size)</th>
-                            <th>Original</th>
-                            <th>Discount</th>
-                            <th>Final Total</th>
-                            <th>Points Used</th>
+                            <th>Fabric (Meters)</th>
+                            <th>Total (PKR)</th>
                             <th>Status</th>
                             <th>Date</th>
                             <th>Update</th>
                         </tr>
                     </thead>
-                    <tbody id="ordersTableBody"><tr><td colspan="11">Loading...</td></tr></tbody>
+                    <tbody id="ordersTableBody"><td><td colspan="8">Loading orders...</td></tr></tbody>
                 </table>
-            </div>
-
-            <!-- MISSIONS -->
-            <div id="missionsSection" class="section">
-                <h2>⭐ Daily Mission</h2>
-                <div style="background:#111; padding:1.5rem; border-radius:1rem;">
-                    <div class="form-group"><label>Title</label><input type="text" id="missionTitle"></div>
-                    <div class="form-group"><label>Description</label><textarea id="missionDesc" rows="2"></textarea></div>
-                    <div class="form-group"><label>Reward Points</label><input type="number" id="missionPoints" value="50"></div>
-                    <div class="form-group"><label>Reward Text</label><input type="text" id="missionRewardText" placeholder="Free Gulab Jamun"></div>
-                    <div class="form-group"><label>Active Date</label><input type="date" id="missionDate"></div>
-                    <button class="btn-primary" onclick="saveDailyMission()">Set Mission</button>
-                </div>
-            </div>
-
-            <!-- RECEIPT CODES -->
-            <div id="codesSection" class="section">
-                <h2>🎟️ Receipt Codes</h2>
-                <div style="background:#111; padding:1rem; border-radius:1rem; margin-bottom:1rem;">
-                    <div class="form-group"><label>Points Value</label><input type="number" id="newCodePoints" value="20"></div>
-                    <button class="btn-primary" onclick="generateReceiptCode()"><i class="fas fa-ticket-alt"></i> Generate Code</button>
-                </div>
-                <table class="admin-table"><thead><tr><th>Code</th><th>Points</th><th>Used</th><th>Created</th><th>Used By</th></tr></thead><tbody id="codesTableBody"><tr><td colspan="5">Loading...</td></tr></tbody></table>
             </div>
         </div>
     </div>
 </div>
 
-<!-- MODAL FOR ADD/EDIT ITEM -->
+<!-- MODAL FOR ADD/EDIT FABRIC ITEM -->
 <div id="itemModal" class="modal">
     <div class="modal-card">
-        <h3 id="modalTitle">Add / Edit Menu Item</h3>
+        <h3 id="modalTitle">Add / Edit Fabric</h3>
         <input type="hidden" id="editId">
-        <div class="form-group"><label>📸 Product Image</label>
+        <div class="form-group"><label>📸 Fabric Image</label>
             <div class="image-option-tabs">
                 <div class="image-tab active" data-option="url" onclick="selectImageOption('url')">🔗 Image URL</div>
                 <div class="image-tab" data-option="local" onclick="selectImageOption('local')">📁 Local Upload</div>
             </div>
             <div id="urlPanel" class="image-upload-panel active-panel">
-                <input type="text" id="imageUrlInput" placeholder="https://example.com/food.jpg">
-                <div class="preview-box"><img id="urlPreview" src="https://placehold.co/100x100/333/FFD700?text=URL"></div>
+                <input type="text" id="imageUrlInput" placeholder="https://example.com/fabric.jpg">
+                <div class="preview-box"><img id="urlPreview" src="https://placehold.co/100x100/333/FFD700?text=Fabric"></div>
             </div>
             <div id="localPanel" class="image-upload-panel">
                 <input type="file" id="localImageFile" accept="image/*" onchange="previewLocalImage(this)">
@@ -293,13 +193,12 @@
                 <div class="progress-bar" id="uploadProgressBar"><div class="progress-fill" id="uploadFill"></div></div>
             </div>
         </div>
-        <div class="form-group"><label>Item Name *</label><input type="text" id="itemName" placeholder="Crispy Zinger Burger"></div>
-        <div class="form-group"><label>Description</label><textarea id="itemDesc" rows="2" placeholder="Delicious taste..."></textarea></div>
-        <div class="form-group"><label>Price (PKR) *</label><input type="number" id="itemPrice" placeholder="450"></div>
-        <div class="form-group"><label>Category</label><select id="itemCategory"><option>Burgers</option><option>Pizza</option><option>Desserts</option><option>Deals</option><option>Fries</option><option>Drinks</option><option>Other</option></select></div>
-        <div class="form-group"><label>Points Reward</label><input type="number" id="itemPoints" value="10"></div>
+        <div class="form-group"><label>Fabric Name *</label><input type="text" id="itemName" placeholder="Premium Lawn Fabric"></div>
+        <div class="form-group"><label>Description</label><textarea id="itemDesc" rows="2" placeholder="Soft, breathable, unstitched fabric..."></textarea></div>
+        <div class="form-group"><label>Price per Meter (PKR) *</label><input type="number" id="itemPrice" placeholder="850"></div>
+        <div class="form-group"><label>Category</label><select id="itemCategory"><option>Lawn</option><option>Silk</option><option>Cotton</option><option>Linen</option><option>Chiffon</option><option>Velvet</option><option>Jersey</option><option>Other</option></select></div>
         <div class="form-group"><label><input type="checkbox" id="itemAvailable" checked> Available</label></div>
-        <button class="btn-primary" onclick="saveMenuItemWrapper()">💾 Save Item</button>
+        <button class="btn-primary" onclick="saveMenuItemWrapper()">💾 Save Fabric</button>
         <button onclick="closeItemModal()" style="background:#333; color:white; border:none; padding:0.5rem 1rem; border-radius:2rem; margin-left:0.5rem;">Cancel</button>
     </div>
 </div>
@@ -308,14 +207,20 @@
 
 <script>
     // ---------- CREDENTIALS ----------
-    const ADMIN_CRED = { user: "food", pass: "food12" };
+    const ADMIN_CRED = { user: "cloth", pass: "cloth12" };
     let logged = false;
     let allMenu = [];
     let currentImageOption = "url";
     let localFileToUpload = null;
-    let discountConfig = { pointsToPkr: 1, maxDiscountPercent: 50, minPointsToRedeem: 10 };
 
-    function toast(msg, isErr = false) { let t = document.getElementById('globalToast'); t.innerText = msg; t.style.background = isErr ? '#dc2626' : '#FFD700'; t.style.color = isErr ? 'white' : '#0a0a0a'; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 3000); }
+    function toast(msg, isErr = false) { 
+        let t = document.getElementById('globalToast'); 
+        t.innerText = msg; 
+        t.style.background = isErr ? '#dc2626' : '#FFD700'; 
+        t.style.color = isErr ? 'white' : '#0a0a0a'; 
+        t.style.display = 'block'; 
+        setTimeout(() => t.style.display = 'none', 3000); 
+    }
 
     // ---------- LOGIN ----------
     window.attemptLogin = function() {
@@ -330,131 +235,298 @@
             document.getElementById('adminNameSpan').innerText = u;
             initStorageBucket();
             loadAllAdminData();
-            loadDiscountConfig();
-        } else { errDiv.innerText = '❌ Invalid credentials'; document.getElementById('adminPass').value = ''; }
+        } else { 
+            errDiv.innerText = '❌ Invalid credentials'; 
+            document.getElementById('adminPass').value = ''; 
+        }
     };
-    window.logout = function() { logged = false; document.getElementById('adminPanel').style.display = 'none'; document.getElementById('loginScreen').style.display = 'flex'; };
-
-    // ---------- DISCOUNT CONFIGURATION ----------
-    async function loadDiscountConfig() {
-        try {
-            const { data, error } = await supabase.from('discount_config').select('*').single();
-            if (data && !error) {
-                discountConfig = {
-                    pointsToPkr: data.points_to_pkr || 1,
-                    maxDiscountPercent: data.max_discount_percent || 50,
-                    minPointsToRedeem: data.min_points_to_redeem || 10
-                };
-                document.getElementById('pointsToPkr').value = discountConfig.pointsToPkr;
-                document.getElementById('maxDiscountPercent').value = discountConfig.maxDiscountPercent;
-                document.getElementById('minPointsToRedeem').value = discountConfig.minPointsToRedeem;
-                document.getElementById('displayMaxPercent').innerText = discountConfig.maxDiscountPercent;
-            }
-        } catch(e) { console.log('Using default config'); }
-    }
-
-    window.saveDiscountConfig = async function() {
-        const config = {
-            points_to_pkr: parseInt(document.getElementById('pointsToPkr').value) || 1,
-            max_discount_percent: parseInt(document.getElementById('maxDiscountPercent').value) || 50,
-            min_points_to_redeem: parseInt(document.getElementById('minPointsToRedeem').value) || 10,
-            updated_at: new Date()
-        };
-        const { error } = await supabase.from('discount_config').upsert([config], { onConflict: 'id' });
-        if (error) { toast('Error: ' + error.message, true); return; }
-        toast('Discount settings saved!');
-        discountConfig = config;
-        document.getElementById('displayMaxPercent').innerText = config.max_discount_percent;
+    
+    window.logout = function() { 
+        logged = false; 
+        document.getElementById('adminPanel').style.display = 'none'; 
+        document.getElementById('loginScreen').style.display = 'flex'; 
     };
 
     // ---------- STORAGE ----------
     async function initStorageBucket() {
-        try { let { data: buckets } = await supabase.storage.listBuckets(); if (!buckets?.some(b => b.name === 'menu-images')) { await supabase.storage.createBucket('menu-images', { public: true, allowedMimeTypes: ['image/png','image/jpeg','image/jpg','image/gif'], fileSizeLimit: 2097152 }); } } catch(e) { console.warn(e); }
+        try { 
+            let { data: buckets } = await supabase.storage.listBuckets(); 
+            if (!buckets?.some(b => b.name === 'fabric-images')) { 
+                await supabase.storage.createBucket('fabric-images', { 
+                    public: true, 
+                    allowedMimeTypes: ['image/png','image/jpeg','image/jpg','image/gif'], 
+                    fileSizeLimit: 2097152 
+                }); 
+            } 
+        } catch(e) { console.warn(e); }
     }
 
-    async function uploadLocalImage(file) { if (!file) return null; let ext = file.name.split('.').pop(); let fname = `products/${Date.now()}_${Math.random().toString(36).substring(2,8)}.${ext}`; let progDiv = document.getElementById('uploadProgressBar'); let fill = document.getElementById('uploadFill'); if(progDiv) progDiv.style.display = 'block'; fill.style.width = '30%'; let { error, data } = await supabase.storage.from('menu-images').upload(fname, file); fill.style.width = '100%'; setTimeout(()=>{ if(progDiv) progDiv.style.display = 'none'; fill.style.width = '0%'; }, 800); if(error) { toast('Upload failed: '+error.message, true); return null; } let { data: { publicUrl } } = supabase.storage.from('menu-images').getPublicUrl(fname); return publicUrl; }
+    async function uploadLocalImage(file) { 
+        if (!file) return null; 
+        let ext = file.name.split('.').pop(); 
+        let fname = `fabrics/${Date.now()}_${Math.random().toString(36).substring(2,8)}.${ext}`; 
+        let progDiv = document.getElementById('uploadProgressBar'); 
+        let fill = document.getElementById('uploadFill'); 
+        if(progDiv) progDiv.style.display = 'block'; 
+        fill.style.width = '30%'; 
+        let { error, data } = await supabase.storage.from('fabric-images').upload(fname, file); 
+        fill.style.width = '100%'; 
+        setTimeout(()=>{ if(progDiv) progDiv.style.display = 'none'; fill.style.width = '0%'; }, 800); 
+        if(error) { 
+            toast('Upload failed: '+error.message, true); 
+            return null; 
+        } 
+        let { data: { publicUrl } } = supabase.storage.from('fabric-images').getPublicUrl(fname); 
+        return publicUrl; 
+    }
 
-    window.selectImageOption = function(opt) { currentImageOption = opt; document.querySelectorAll('.image-tab').forEach(tab => tab.classList.remove('active')); document.querySelector(`.image-tab[data-option="${opt}"]`).classList.add('active'); document.getElementById('urlPanel').classList.toggle('active-panel', opt === 'url'); document.getElementById('localPanel').classList.toggle('active-panel', opt === 'local'); };
-    window.previewLocalImage = function(input) { if(input.files && input.files[0]) { localFileToUpload = input.files[0]; let reader = new FileReader(); reader.onload = e => document.getElementById('localPreview').src = e.target.result; reader.readAsDataURL(input.files[0]); } };
-    function updateUrlPreview() { let url = document.getElementById('imageUrlInput').value; if(url) document.getElementById('urlPreview').src = url; else document.getElementById('urlPreview').src = 'https://placehold.co/100x100/333/FFD700?text=URL'; }
+    window.selectImageOption = function(opt) { 
+        currentImageOption = opt; 
+        document.querySelectorAll('.image-tab').forEach(tab => tab.classList.remove('active')); 
+        document.querySelector(`.image-tab[data-option="${opt}"]`).classList.add('active'); 
+        document.getElementById('urlPanel').classList.toggle('active-panel', opt === 'url'); 
+        document.getElementById('localPanel').classList.toggle('active-panel', opt === 'local'); 
+    };
+    
+    window.previewLocalImage = function(input) { 
+        if(input.files && input.files[0]) { 
+            localFileToUpload = input.files[0]; 
+            let reader = new FileReader(); 
+            reader.onload = e => document.getElementById('localPreview').src = e.target.result; 
+            reader.readAsDataURL(input.files[0]); 
+        } 
+    };
+    
+    function updateUrlPreview() { 
+        let url = document.getElementById('imageUrlInput').value; 
+        if(url) document.getElementById('urlPreview').src = url; 
+        else document.getElementById('urlPreview').src = 'https://placehold.co/100x100/333/FFD700?text=Fabric'; 
+    }
 
     // ---------- LOAD DATA ----------
-    async function loadAllAdminData() { await loadDashboardStats(); await loadMenuItems(); await fetchOrders(); await loadReceiptCodes(); await loadCurrentMission(); renderCategoryFilters(); }
-    async function loadDashboardStats() { let { data: items } = await supabase.from('menu_items').select('id'); let { data: orders } = await supabase.from('orders').select('total_price'); let { data: games } = await supabase.from('game_scores').select('id'); let revenue = orders?.reduce((s,o)=>s+(o.total_price||0),0)||0; document.getElementById('statItems').innerText = items?.length||0; document.getElementById('statOrders').innerText = orders?.length||0; document.getElementById('statRevenue').innerText = 'PKR '+revenue; document.getElementById('statGames').innerText = games?.length||0; }
+    async function loadAllAdminData() { 
+        await loadDashboardStats(); 
+        await loadMenuItems(); 
+        await fetchOrders(); 
+        renderCategoryFilters(); 
+    }
+    
+    async function loadDashboardStats() { 
+        let { data: items } = await supabase.from('menu_items').select('id'); 
+        let { data: orders } = await supabase.from('orders').select('total_price'); 
+        let revenue = orders?.reduce((s,o)=>s+(o.total_price||0),0)||0; 
+        document.getElementById('statItems').innerText = items?.length||0; 
+        document.getElementById('statOrders').innerText = orders?.length||0; 
+        document.getElementById('statRevenue').innerText = 'PKR '+revenue; 
+    }
 
-    async function loadMenuItems() { let { data, error } = await supabase.from('menu_items').select('*').order('created_at', { ascending: false }); if(!error) { allMenu = data||[]; renderMenuTable(); } else toast('menu error',true); }
-    function renderMenuTable() { let tbody = document.getElementById('menuTableBody'); if(!allMenu.length) { tbody.innerHTML = '<tr><td colspan="7">No items</td></tr>'; return; } tbody.innerHTML = allMenu.map(m => `<tr><td><img src="${m.image_url||'https://placehold.co/50x50/333/FFD700?text=Food'}" width="50" height="50" style="border-radius:8px; object-fit:cover;" onerror="this.src='https://placehold.co/50x50/333/FFD700?text=Food'"></td><td><strong>${escapeHtml(m.name)}</strong><br><small>${escapeHtml(m.description?.substring(0,50)||'')}</small></td><td>${m.category}</td><td>PKR ${m.price}</td><td>🏆 ${m.points_reward}</td><td>${m.is_available ? '✅' : '❌'}</td><td><button class="btn-edit" onclick="openEditItem('${m.id}')">Edit</button> <button class="btn-danger" onclick="deleteItem('${m.id}')">Delete</button></td></tr>`).join(''); }
-    function renderCategoryFilters() { let cats = [...new Set(allMenu.map(i=>i.category))]; let container = document.getElementById('categoryFilters'); if(!container) return; container.innerHTML = `<button onclick="filterMenu('all')" style="background:#FFD700; color:#000; border:none; padding:0.3rem 1rem; border-radius:20px;">All</button>`+cats.map(c=>`<button onclick="filterMenu('${c}')" style="background:#333; color:white; border:none; padding:0.3rem 1rem; border-radius:20px;">${c}</button>`).join(''); }
-    window.filterMenu = function(cat) { if(cat==='all') renderMenuTable(); else { let filtered = allMenu.filter(i=>i.category===cat); let tbody = document.getElementById('menuTableBody'); tbody.innerHTML = filtered.map(m => `<tr>...`).join(''); } };
+    async function loadMenuItems() { 
+        let { data, error } = await supabase.from('menu_items').select('*').order('created_at', { ascending: false }); 
+        if(!error) { 
+            allMenu = data||[]; 
+            renderMenuTable(); 
+        } else toast('menu error',true); 
+    }
+    
+    function renderMenuTable() { 
+        let tbody = document.getElementById('menuTableBody'); 
+        if(!allMenu.length) { 
+            tbody.innerHTML = '<tr><td colspan="6">No fabrics found</td></tr>'; 
+            return; 
+        } 
+        tbody.innerHTML = allMenu.map(m => `
+            <tr>
+                <td><img src="${m.image_url||'https://placehold.co/50x50/333/FFD700?text=Fabric'}" width="50" height="50" style="border-radius:8px; object-fit:cover;" onerror="this.src='https://placehold.co/50x50/333/FFD700?text=Fabric'"></td>
+                <td><strong>${escapeHtml(m.name)}</strong><br><small>${escapeHtml(m.description?.substring(0,50)||'')}</small></td>
+                <td>${m.category}</td>
+                <td>PKR ${m.price}/meter</td>
+                <td>${m.is_available ? '✅ Available' : '❌ Unavailable'}</td>
+                <td><button class="btn-edit" onclick="openEditItem('${m.id}')">Edit</button> <button class="btn-danger" onclick="deleteItem('${m.id}')">Delete</button></td>
+            </tr>
+        `).join(''); 
+    }
+    
+    function renderCategoryFilters() { 
+        let cats = [...new Set(allMenu.map(i=>i.category))]; 
+        let container = document.getElementById('categoryFilters'); 
+        if(!container) return; 
+        container.innerHTML = `<button onclick="filterMenu('all')" style="background:#FFD700; color:#000; border:none; padding:0.3rem 1rem; border-radius:20px;">All</button>`+cats.map(c=>`<button onclick="filterMenu('${c}')" style="background:#333; color:white; border:none; padding:0.3rem 1rem; border-radius:20px;">${c}</button>`).join(''); 
+    }
+    
+    window.filterMenu = function(cat) { 
+        if(cat==='all') renderMenuTable(); 
+        else { 
+            let filtered = allMenu.filter(i=>i.category===cat); 
+            let tbody = document.getElementById('menuTableBody'); 
+            tbody.innerHTML = filtered.map(m => `<tr>...</tr>`).join(''); 
+        } 
+    };
 
-    window.openItemModal = function() { document.getElementById('editId').value = ''; document.getElementById('itemName').value = ''; document.getElementById('itemDesc').value = ''; document.getElementById('itemPrice').value = ''; document.getElementById('itemCategory').value = 'Burgers'; document.getElementById('itemPoints').value = '10'; document.getElementById('itemAvailable').checked = true; document.getElementById('imageUrlInput').value = ''; document.getElementById('urlPreview').src = 'https://placehold.co/100x100/333/FFD700?text=URL'; document.getElementById('localPreview').src = 'https://placehold.co/100x100/333/FFD700?text=Local'; localFileToUpload = null; selectImageOption('url'); document.getElementById('itemModal').style.display = 'flex'; };
-    window.openEditItem = async function(id) { let item = allMenu.find(i=>i.id===id); if(!item) return; document.getElementById('editId').value = item.id; document.getElementById('itemName').value = item.name; document.getElementById('itemDesc').value = item.description||''; document.getElementById('itemPrice').value = item.price; document.getElementById('itemCategory').value = item.category; document.getElementById('itemPoints').value = item.points_reward; document.getElementById('itemAvailable').checked = item.is_available; let existingImg = item.image_url || ''; document.getElementById('imageUrlInput').value = existingImg; document.getElementById('urlPreview').src = existingImg || 'https://placehold.co/100x100/333/FFD700?text=URL'; document.getElementById('localPreview').src = 'https://placehold.co/100x100/333/FFD700?text=Local'; localFileToUpload = null; selectImageOption('url'); document.getElementById('itemModal').style.display = 'flex'; };
-    window.saveMenuItemWrapper = async function() { let id = document.getElementById('editId').value; let name = document.getElementById('itemName').value.trim(); let price = parseInt(document.getElementById('itemPrice').value); if(!name || !price) { toast('Name & Price required', true); return; } let finalImageUrl = ''; if(currentImageOption === 'url') { finalImageUrl = document.getElementById('imageUrlInput').value.trim(); } else { if(localFileToUpload) { let uploaded = await uploadLocalImage(localFileToUpload); if(uploaded) finalImageUrl = uploaded; else { toast('Image upload failed', true); return; } } else { finalImageUrl = document.getElementById('imageUrlInput').value.trim(); } } let payload = { name, description: document.getElementById('itemDesc').value, price, category: document.getElementById('itemCategory').value, points_reward: parseInt(document.getElementById('itemPoints').value)||10, is_available: document.getElementById('itemAvailable').checked, image_url: finalImageUrl || null }; let result; if(id) result = await supabase.from('menu_items').update(payload).eq('id', id); else result = await supabase.from('menu_items').insert([payload]); if(result.error) { toast('DB error: '+result.error.message, true); return; } toast(id ? 'Item updated' : 'Item added'); closeItemModal(); await loadMenuItems(); await loadDashboardStats(); renderCategoryFilters(); };
-    window.deleteItem = async function(id) { if(confirm('Delete permanently?')) { let { error } = await supabase.from('menu_items').delete().eq('id', id); if(error) toast(error.message, true); else { toast('Deleted'); await loadMenuItems(); await loadDashboardStats(); renderCategoryFilters(); } } };
-    window.closeItemModal = function() { document.getElementById('itemModal').style.display = 'none'; localFileToUpload = null; };
+    window.openItemModal = function() { 
+        document.getElementById('editId').value = ''; 
+        document.getElementById('itemName').value = ''; 
+        document.getElementById('itemDesc').value = ''; 
+        document.getElementById('itemPrice').value = ''; 
+        document.getElementById('itemCategory').value = 'Lawn'; 
+        document.getElementById('itemAvailable').checked = true; 
+        document.getElementById('imageUrlInput').value = ''; 
+        document.getElementById('urlPreview').src = 'https://placehold.co/100x100/333/FFD700?text=Fabric'; 
+        document.getElementById('localPreview').src = 'https://placehold.co/100x100/333/FFD700?text=Local'; 
+        localFileToUpload = null; 
+        selectImageOption('url'); 
+        document.getElementById('itemModal').style.display = 'flex'; 
+    };
+    
+    window.openEditItem = async function(id) { 
+        let item = allMenu.find(i=>i.id===id); 
+        if(!item) return; 
+        document.getElementById('editId').value = item.id; 
+        document.getElementById('itemName').value = item.name; 
+        document.getElementById('itemDesc').value = item.description||''; 
+        document.getElementById('itemPrice').value = item.price; 
+        document.getElementById('itemCategory').value = item.category; 
+        document.getElementById('itemAvailable').checked = item.is_available; 
+        let existingImg = item.image_url || ''; 
+        document.getElementById('imageUrlInput').value = existingImg; 
+        document.getElementById('urlPreview').src = existingImg || 'https://placehold.co/100x100/333/FFD700?text=Fabric'; 
+        document.getElementById('localPreview').src = 'https://placehold.co/100x100/333/FFD700?text=Local'; 
+        localFileToUpload = null; 
+        selectImageOption('url'); 
+        document.getElementById('itemModal').style.display = 'flex'; 
+    };
+    
+    window.saveMenuItemWrapper = async function() { 
+        let id = document.getElementById('editId').value; 
+        let name = document.getElementById('itemName').value.trim(); 
+        let price = parseInt(document.getElementById('itemPrice').value); 
+        if(!name || !price) { 
+            toast('Name & Price required', true); 
+            return; 
+        } 
+        let finalImageUrl = ''; 
+        if(currentImageOption === 'url') { 
+            finalImageUrl = document.getElementById('imageUrlInput').value.trim(); 
+        } else { 
+            if(localFileToUpload) { 
+                let uploaded = await uploadLocalImage(localFileToUpload); 
+                if(uploaded) finalImageUrl = uploaded; 
+                else { 
+                    toast('Image upload failed', true); 
+                    return; 
+                } 
+            } else { 
+                finalImageUrl = document.getElementById('imageUrlInput').value.trim(); 
+            } 
+        } 
+        let payload = { 
+            name, 
+            description: document.getElementById('itemDesc').value, 
+            price, 
+            category: document.getElementById('itemCategory').value, 
+            points_reward: 0,
+            is_available: document.getElementById('itemAvailable').checked, 
+            image_url: finalImageUrl || null 
+        }; 
+        let result; 
+        if(id) result = await supabase.from('menu_items').update(payload).eq('id', id); 
+        else result = await supabase.from('menu_items').insert([payload]); 
+        if(result.error) { 
+            toast('DB error: '+result.error.message, true); 
+            return; 
+        } 
+        toast(id ? 'Fabric updated' : 'Fabric added'); 
+        closeItemModal(); 
+        await loadMenuItems(); 
+        await loadDashboardStats(); 
+        renderCategoryFilters(); 
+    };
+    
+    window.deleteItem = async function(id) { 
+        if(confirm('Delete permanently?')) { 
+            let { error } = await supabase.from('menu_items').delete().eq('id', id); 
+            if(error) toast(error.message, true); 
+            else { 
+                toast('Fabric deleted'); 
+                await loadMenuItems(); 
+                await loadDashboardStats(); 
+                renderCategoryFilters(); 
+            } 
+        } 
+    };
+    
+    window.closeItemModal = function() { 
+        document.getElementById('itemModal').style.display = 'none'; 
+        localFileToUpload = null; 
+    };
 
-    // ORDERS WITH SIZE TRACKING
+    // ORDERS WITH METER TRACKING (NO POINTS, ONLY FABRIC ORDERS)
     window.fetchOrders = async function() {
         let date = document.getElementById('orderFilterDate').value;
         let q = supabase.from('orders').select('*').order('created_at',{ascending:false});
-        if(date) { let start = date+'T00:00:00', end = date+'T23:59:59'; q = q.gte('created_at',start).lte('created_at',end); }
+        if(date) { 
+            let start = date+'T00:00:00', end = date+'T23:59:59'; 
+            q = q.gte('created_at',start).lte('created_at',end); 
+        }
         let { data } = await q;
         let tbody = document.getElementById('ordersTableBody');
-        if(!data || !data.length) { tbody.innerHTML = '<tr><td colspan="11">No orders</td></tr>'; return; }
+        if(!data || !data.length) { 
+            tbody.innerHTML = '<tr><td colspan="8">No fabric orders</td></tr>'; 
+            return; 
+        }
         tbody.innerHTML = data.map(o => {
             let itemsHtml = '';
+            let totalMeters = 0;
             if(o.items_ordered && Array.isArray(o.items_ordered)) {
                 itemsHtml = o.items_ordered.map(item => {
-                    let sizeInfo = '';
-                    if(item.name && (item.name.includes('Pizza') || item.category === 'Pizza')) {
-                        if(item.size) sizeInfo = `<span class="size-badge">🍕 ${item.size}</span>`;
-                        else if(item.name.includes('(')) {
-                            let match = item.name.match(/\(([^)]+)\)/);
-                            if(match) sizeInfo = `<span class="size-badge">🍕 ${match[1]}</span>`;
-                        }
-                    } else if(item.name && (item.name.includes('Drink') || item.category === 'Drinks')) {
-                        if(item.size) sizeInfo = `<span class="size-badge">🥤 ${item.size}</span>`;
+                    let meterInfo = '';
+                    if(item.meters) {
+                        meterInfo = `<span class="meter-badge">📏 ${item.meters} meters</span>`;
+                        totalMeters += (item.meters || 0);
+                    } else if(item.size && item.category === 'Fabric') {
+                        meterInfo = `<span class="meter-badge">📏 ${item.size} m</span>`;
+                        totalMeters += parseFloat(item.size) || 0;
                     }
-                    return `<div class="order-item-row">${escapeHtml(item.name || 'Item')} ×${item.qty || 1} ${sizeInfo}</div>`;
+                    return `<div class="order-item-row">${escapeHtml(item.name || 'Fabric')} ×${item.qty || 1} ${meterInfo}</div>`;
                 }).join('');
             } else if(o.items_ordered && typeof o.items_ordered === 'object') {
-                itemsHtml = `<div class="order-item-row">${escapeHtml(o.items_ordered.name || 'Item')} ×${o.items_ordered.qty || 1}</div>`;
+                let meters = o.items_ordered.meters || '';
+                itemsHtml = `<div class="order-item-row">${escapeHtml(o.items_ordered.name || 'Fabric')} ${meters ? `(${meters}m)` : ''}</div>`;
             }
             return `<tr>
                 <td>${o.id.slice(0,8)}</td>
                 <td>${escapeHtml(o.customer_name||'-')}</td>
                 <td>${o.customer_phone||'-'}</td>
                 <td class="order-items-list">${itemsHtml || '-'}</td>
-                <td>PKR ${o.original_price || o.total_price || 0}</td>
-                <td>PKR ${o.discount_amount || 0}</td>
                 <td>PKR ${o.total_price || 0}</td>
-                <td>${o.points_used || 0}</td>
-                <td><select onchange="updateOrderStat('${o.id}',this.value)" style="background:#222;color:white;">${['Pending','Confirmed','Delivered','Cancelled'].map(s=>`<option ${o.status===s?'selected':''}>${s}</option>`).join('')}</select></td>
+                <td><select onchange="updateOrderStat('${o.id}',this.value)" style="background:#222;color:white;border-radius:8px;padding:0.3rem;">${['Pending','Confirmed','Shipped','Delivered','Cancelled'].map(s=>`<option ${o.status===s?'selected':''}>${s}</option>`).join('')}</select></td>
                 <td>${new Date(o.created_at).toLocaleDateString()}</td>
-                <td><button class="btn-edit" onclick="updateOrderStat('${o.id}', document.getElementById('status_${o.id}')?.value)">Save</button></td>
+                <td><button class="btn-edit" onclick="updateOrderStat('${o.id}', document.querySelector('#orderStatus_${o.id}')?.value || document.getElementById('orderSelect_${o.id}')?.value)">Save</button></td>
             </tr>`;
         }).join('');
     };
-    window.updateOrderStat = async function(id, status) { await supabase.from('orders').update({ status }).eq('id', id); toast(`Order ${status}`); fetchOrders(); };
     
-    // MISSIONS
-    window.saveDailyMission = async function() { let date = document.getElementById('missionDate').value || new Date().toISOString().slice(0,10); let { error } = await supabase.from('daily_missions').upsert({ title: document.getElementById('missionTitle').value, description: document.getElementById('missionDesc').value, reward_points: parseInt(document.getElementById('missionPoints').value), reward_text: document.getElementById('missionRewardText').value, active_date: date }, { onConflict: 'active_date' }); if(error) toast(error.message, true); else toast('Mission saved'); };
-    async function loadCurrentMission() { let today = new Date().toISOString().slice(0,10); let { data } = await supabase.from('daily_missions').select('*').eq('active_date', today).limit(1); if(data && data[0]) { document.getElementById('missionTitle').value = data[0].title||''; document.getElementById('missionDesc').value = data[0].description||''; document.getElementById('missionPoints').value = data[0].reward_points||50; document.getElementById('missionRewardText').value = data[0].reward_text||''; document.getElementById('missionDate').value = data[0].active_date; } }
+    window.updateOrderStat = async function(id, status) { 
+        if(!status) {
+            let select = document.querySelector(`select[onchange*="${id}"]`);
+            if(select) status = select.value;
+        }
+        await supabase.from('orders').update({ status }).eq('id', id); 
+        toast(`Order ${status}`); 
+        fetchOrders(); 
+    };
     
-    // CODES
-    window.generateReceiptCode = async function() { let points = parseInt(document.getElementById('newCodePoints').value); let code = 'HJ' + Math.random().toString(36).substring(2,8).toUpperCase(); let { error } = await supabase.from('receipt_codes').insert([{ code, points_value: points }]); if(error) toast(error.message, true); else toast(`Code: ${code}`); loadReceiptCodes(); };
-    async function loadReceiptCodes() { let { data } = await supabase.from('receipt_codes').select('*').order('created_at',{ascending:false}); let tbody = document.getElementById('codesTableBody'); if(!data || !data.length) { tbody.innerHTML = '<tr><td colspan="5">No codes</td></tr>'; return; } tbody.innerHTML = data.map(c => `<tr><td><strong>${c.code}</strong></td><td>${c.points_value}</td><td>${c.is_used ? '✅ Used' : '❌ Unused'}</td><td>${new Date(c.created_at).toLocaleDateString()}</td><td>${c.used_by_email||'-'}</td></tr>`).join(''); }
-    
-    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); }
+    function escapeHtml(str) { 
+        if(!str) return ''; 
+        return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); 
+    }
     
     window.switchSection = function(section) {
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
         document.getElementById(`${section}Section`).classList.add('active');
         document.querySelectorAll('.sidebar button').forEach(btn => btn.classList.remove('active'));
-        const btnMap = { dashboard:'btnDash', discount:'btnDiscount', menu:'btnMenu', orders:'btnOrders', missions:'btnMissions', codes:'btnCodes' };
+        const btnMap = { dashboard:'btnDash', menu:'btnMenu', orders:'btnOrders' };
         if(btnMap[section]) document.getElementById(btnMap[section]).classList.add('active');
         if(section === 'orders') fetchOrders();
-        if(section === 'discount') loadDiscountConfig();
     };
     
     document.getElementById('imageUrlInput')?.addEventListener('input', updateUrlPreview);

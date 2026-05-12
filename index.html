@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Foodfight | Fast Food Arifwala</title>
+    <title>Cloth Shop | Unstitched Fabrics - Arifwala</title>
     <!-- Google Fonts & Styles -->
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -12,34 +12,15 @@
     <script src="supabase-config.js"></script>
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        /* Additional styles for famous items */
-        .famous-badge {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: #FFD700;
-            color: #0a0a0a;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            font-weight: bold;
-            z-index: 2;
-        }
-        .card {
-            position: relative;
-        }
-    </style>
 </head>
 <body>
     <!-- Sticky Navbar -->
     <nav class="navbar">
         <div class="nav-container">
-            <div class="logo">FOODFIGHT</div>
+            <div class="logo">CLOTH SHOP</div>
             <ul class="nav-links" id="navLinks">
                 <li><a href="index.html" class="active">Home</a></li>
-                <li><a href="menu.html">Menu</a></li>
-                <li><a href="game.html">Game</a></li>
+                <li><a href="article.html">article</a></li>
                 <li><a href="account.html">Contact</a></li>
                 <li><a href="account.html"><i class="fas fa-user-circle"></i> Account</a></li>
             </ul>
@@ -53,24 +34,23 @@
     <section class="hero">
         <div class="hero-content">
             <div class="hero-text">
-                <span class="hero-badge">Fast Food | Arifwala</span>
-                <h1>Taste the <span class="yellow-text">Street</span><br>Fresh & Fast</h1>
-                <p>Fresh. Fast. Flavourful.</p>
-                <a href="menu.html" class="btn-yellow">Order Now <i class="fas fa-arrow-right"></i></a>
+                <span class="hero-badge">Premium Unstitched Fabric | Arifwala</span>
+                <h1>Feel the <span class="yellow-text">Fabric</span><br>Pure & Elegant</h1>
+                <p>Premium quality unstitched fabric by meter. Lawn, Silk, Cotton & more.</p>
+                <a href="article.html" class="btn-yellow">Shop Now <i class="fas fa-arrow-right"></i></a>
             </div>
             <div class="hero-image">
-                <img src="image.png" alt="Foodfight Street Food" onerror="this.src='https://placehold.co/600x400/FFD700/0a0a0a?text=Foodfight'">
+                <img src="image.png" alt="Cloth Shop Fabrics" onerror="this.src='https://placehold.co/600x400/FFD700/0a0a0a?text=Fabric+Shop'">
             </div>
         </div>
     </section>
 
-    <!-- Famous Items Section (renamed from Top Picks) -->
+    <!-- Famous Items Section - Premium Fabrics -->
     <section class="top-picks">
         <div class="container">
-            <h2 class="section-title">⭐ FAMOUS ITEMS ⭐</h2>
+            <h2 class="section-title">FAMOUS UNSTITCHED FABRICS</h2>
             <div class="scroll-cards" id="famousItemsContainer">
-                <!-- dynamically loaded -->
-                <div class="loading">Loading famous items...</div>
+                <div class="loading">Loading premium fabrics...</div>
             </div>
         </div>
     </section>
@@ -80,14 +60,14 @@
         <div class="container">
             <div class="contact-grid">
                 <div class="contact-details">
-                    <h3>📍 Foodfight HQ</h3>
+                    <h3>📍 Cloth Shop HQ</h3>
                     <p><i class="fas fa-map-marker-alt"></i> Main Bazar, Arifwala, Pakistan</p>
                     <p><i class="fas fa-phone-alt"></i> +92 3054557208</p>
-                    <p><i class="fas fa-envelope"></i> orders@foodfight.com</p>
-                    <p><i class="fas fa-clock"></i> Daily: 2PM – 2AM</p>
+                    <p><i class="fas fa-envelope"></i> orders@clothshop.com</p>
+                    <p><i class="fas fa-clock"></i> Daily: 10AM – 10PM</p>
                 </div>
                 <div class="map-placeholder">
-                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3441.1234567890123!2d73.0632358!3d30.2740893!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x393d39007933d7a9%3A0xf972342d37e98e3e!2sFood%20Fight!5e0!3m2!1sen!2s!4v1234567890123!5m2!1sen!2s" 
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3441.1234567890123!2d73.0632358!3d30.2740893!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x393d39007933d7a9%3A0xf972342d37e98e3e!2sCloth%20Shop!5e0!3m2!1sen!2s!4v1234567890123!5m2!1sen!2s" 
                         width="100%" height="250" style="border:0; border-radius: 12px;" allowfullscreen="" loading="lazy">
                     </iframe>
                 </div>
@@ -98,8 +78,8 @@
     <!-- Footer -->
     <footer>
         <div class="footer-content">
-            <div class="footer-logo">FOODFIGHT</div>
-            <p>© 2025 Foodfight Fast Food. All rights reserved.</p>
+            <div class="footer-logo">CLOTH SHOP</div>
+            <p>© 2025 Cloth Shop | Premium Unstitched Fabrics. All rights reserved.</p>
             <div class="social-icons">
                 <i class="fab fa-instagram"></i>
                 <i class="fab fa-facebook"></i>
@@ -137,8 +117,8 @@
             }, 3000);
         }
 
-        // Handle order click - redirect to menu page with item preselected
-        function handleOrderClick(itemId, itemName, itemPrice) {
+        // Handle order click - redirect to menu page (which should be renamed to fabric order page)
+        function handleOrderClick(itemId, itemName, itemPrice, itemCategory) {
             // Check if user is logged in
             if (!currentUser) {
                 showToast('⚠️ Please login first to place order! Redirecting...', true);
@@ -148,66 +128,81 @@
                 return;
             }
             
-            // Store selected item in sessionStorage to pre-fill on menu page
+            // Store selected fabric item in sessionStorage to pre-fill on order page
             sessionStorage.setItem('selectedItemId', itemId);
             sessionStorage.setItem('selectedItemName', itemName);
             sessionStorage.setItem('selectedItemPrice', itemPrice);
+            sessionStorage.setItem('selectedItemCategory', itemCategory);
             
-            // Redirect to menu page for size selection and checkout
+            // Redirect to menu.html (which should handle fabric orders with meter selection)
             window.location.href = 'menu.html';
         }
 
-        // Load famous items from Supabase
+        // Load famous fabrics (unstitched cloth only) from Supabase
         async function loadFamousItems() {
             const container = document.getElementById('famousItemsContainer');
             if(!container) return;
             try {
-                // Get famous items (high points reward or specific categories)
-                const { data, error } = await supabase
+                // Fetch fabric items (unstitched cloth) - filter by clothing/fabric categories
+                let { data, error } = await supabase
                     .from('menu_items')
                     .select('*')
-                    .eq('is_available', true)
-                    .in('category', ['Pizza', 'Burgers', 'Desserts'])
-                    .limit(6);
+                    .eq('is_available', true);
                     
                 if(error) throw error;
+                
+                // Filter to keep only fabric/cloth items (no food)
+                if(data && data.length) {
+                    const fabricKeywords = ['lawn', 'silk', 'cotton', 'linen', 'chiffon', 'velvet', 'jersey', 'organza', 'fabric', 'unstitched', 'meter', 'cloth', 'khaddar', 'voile', 'net', 'lace', 'suit', 'piece'];
+                    data = data.filter(item => {
+                        const name = (item.name || '').toLowerCase();
+                        const desc = (item.description || '').toLowerCase();
+                        const cat = (item.category || '').toLowerCase();
+                        return fabricKeywords.some(kw => name.includes(kw) || desc.includes(kw) || cat.includes(kw)) || 
+                               (!cat.includes('pizza') && !cat.includes('burger') && !cat.includes('dessert') && !cat.includes('food'));
+                    });
+                }
+                
+                // If no fabric data or empty, provide fallback fabric collection
                 if(!data || data.length === 0) {
-                    // Fallback: get any available items
-                    const { data: fallback } = await supabase
-                        .from('menu_items')
-                        .select('*')
-                        .eq('is_available', true)
-                        .limit(6);
-                    if(fallback) data = fallback;
+                    const fallbackFabrics = [
+                        { id: "fab_1", name: "Premium Lawn Fabric", description: "Pure Egyptian cotton lawn, breathable & soft, unstitched by meter.", price: 850, category: "Lawn", image_url: "https://placehold.co/300x200/1a1a1a/FFD700?text=LAWN+FABRIC", points_reward: 15, is_available: true, isFamous: true },
+                        { id: "fab_2", name: "Raw Silk Charmeuse", description: "Luxurious raw silk with natural sheen, perfect for formal wear.", price: 2450, category: "Silk", image_url: "https://placehold.co/300x200/2a1a1a/FFD700?text=SILK+FABRIC", points_reward: 35, is_available: true, isFamous: true },
+                        { id: "fab_3", name: "Soft Cotton Voile", description: "Lightweight, airy cotton voile, ideal for daily wear kurtis.", price: 590, category: "Cotton", image_url: "https://placehold.co/300x200/1a2a2a/FFD700?text=COTTON+VOILE", points_reward: 10, is_available: true, isFamous: false },
+                        { id: "fab_4", name: "Linen Blend Earth Tone", description: "Breathable linen-cotton blend, textured finish, unstitched fabric.", price: 1290, category: "Linen", image_url: "https://placehold.co/300x200/2a2a1a/FFD700?text=LINEN+BLEND", points_reward: 20, is_available: true, isFamous: true },
+                        { id: "fab_5", name: "Digital Printed Chiffon", description: "Flowing chiffon with floral digital print, perfect for dupattas.", price: 990, category: "Chiffon", image_url: "https://placehold.co/300x200/1a1a2a/FFD700?text=CHIFFON", points_reward: 18, is_available: true, isFamous: false },
+                        { id: "fab_6", name: "Velvet Crimson", description: "Soft crushed velvet, luxurious drape, evening wear fabric.", price: 2190, category: "Velvet", image_url: "https://placehold.co/300x200/2a1a2a/FFD700?text=VELVET", points_reward: 30, is_available: true, isFamous: true }
+                    ];
+                    data = fallbackFabrics;
                 }
                 
                 if(!data || data.length === 0) {
-                    container.innerHTML = '<p>No famous items available</p>';
+                    container.innerHTML = '<p>No fabrics available</p>';
                     return;
                 }
                 
-                // Mark some items as "Famous" based on category
-                const famousItems = data.map(item => ({
+                // Mark famous fabrics (high quality or specific categories)
+                const famousItems = data.slice(0, 6).map(item => ({
                     ...item,
-                    isFamous: item.category === 'Pizza' || item.category === 'Burgers' || item.name.includes('Zinger')
+                    isFamous: item.category === 'Lawn' || item.category === 'Silk' || item.category === 'Velvet' || item.price > 1500 || item.name.includes('Premium')
                 }));
                 
                 container.innerHTML = famousItems.map(item => `
                     <div class="card">
                         ${item.isFamous ? '<div class="famous-badge">⭐ FAMOUS</div>' : ''}
-                        <img src="${item.image_url || 'https://placehold.co/300x200/111111/FFD700?text=Foodfight'}" alt="${escapeHtml(item.name)}" onerror="this.src='https://placehold.co/300x200/111111/FFD700?text=Foodfight'">
+                        <img src="${item.image_url || 'https://placehold.co/300x200/111111/FFD700?text=Fabric'}" alt="${escapeHtml(item.name)}" onerror="this.src='https://placehold.co/300x200/111111/FFD700?text=Fabric'">
                         <h3>${escapeHtml(item.name)}</h3>
-                        <p>${escapeHtml(item.description?.substring(0,60) || 'Delicious taste')}</p>
-                        <div class="price">PKR ${item.price}</div>
-                        <button class="order-btn-small" onclick="handleOrderClick('${item.id}', '${escapeHtml(item.name)}', ${item.price})">
-                            Order Now <i class="fas fa-shopping-cart"></i>
+                        <p>${escapeHtml(item.description?.substring(0,60) || 'Premium unstitched fabric by meter')}</p>
+                        <div class="price">PKR ${item.price}/meter</div>
+                        <button class="order-btn-small" onclick="handleOrderClick('${item.id}', '${escapeHtml(item.name)}', ${item.price}, '${escapeHtml(item.category)}')">
+                            Order by Meter <i class="fas fa-cut"></i>
                         </button>
                     </div>
                 `).join('');
                 
             } catch(err) {
                 console.error(err);
-                container.innerHTML = '<p>Failed to load famous items</p>';
+                container.innerHTML = '<p>Failed to load fabrics</p>';
             }
         }
 
