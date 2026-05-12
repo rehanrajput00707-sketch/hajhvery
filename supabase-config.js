@@ -1,9 +1,9 @@
 // supabase-config.js
 // IMPORTANT: Replace these with your actual Supabase project credentials
 // Get them from: https://app.supabase.com/project/_/settings/api
-
-const SUPABASE_URL = 'https://bvqkqrqjpxugsbjonpua.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_gT7WdtUeBfF9IzUClVmHUg_NTK80KGD';
+https
+const SUPABASE_URL = 'https://jwtutwcwakgbgihjglqe.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_Nb1v4EUzFW5vm3BdmF_hQg_yKaPj0YV';
 
 // Initialize Supabase client
 const { createClient } = window.supabase;
