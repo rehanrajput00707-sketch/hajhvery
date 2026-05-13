@@ -3,24 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Cloth Shop | Unstitched Fabrics - Arifwala</title>
+    <title>Masha ALLAH | Unstitched Fabrics - Arifwala</title>
     <!-- Google Fonts & Styles -->
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <!-- Supabase JS -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js"></script>
-    <!-- Font Awesome Icons -->
+   <!-- Load Supabase CDN first -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- Then load your config -->
+<script src="supabase-config.js"></script>
+
+<!-- Then your custom script -->
+<script>
+    // Now you can use all functions
+    async function loadProducts() {
+        const result = await getAllFabrics();
+        if (result.success) {
+            console.log('Products:', result.data);
+        } else {
+            console.error('Error:', result.error);
+        }
+    }
+    
+    loadProducts();
+</script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Only override for famous items - exactly 4 cards in a horizontal line */
+        .famous-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        /* Keep the scroll-cards class but ensure exactly 4 cards show */
+        .famous-scroll {
+            display: flex;
+            gap: 2rem;
+            overflow-x: auto;
+            padding-bottom: 1rem;
+            scrollbar-width: thin;
+            scrollbar-color: #FFD700 #222;
+        }
+        
+        .famous-scroll::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        .famous-scroll::-webkit-scrollbar-track {
+            background: #222;
+            border-radius: 10px;
+        }
+        
+        .famous-scroll::-webkit-scrollbar-thumb {
+            background: #FFD700;
+            border-radius: 10px;
+        }
+        
+        /* Force each card to have consistent width - exactly 4 visible at a time on desktop */
+        .famous-scroll .card {
+            min-width: 280px;
+            flex: 0 0 280px;
+            background: #111111;
+            border-radius: 20px;
+            overflow: hidden;
+            transition: transform 0.3s;
+            border: 1px solid #070505;
+        }
+        
+        .famous-scroll .card:hover {
+            transform: scale(1.03);
+        }
+        
+        .famous-scroll .card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .famous-scroll .card h3 {
+            font-size: 1.5rem;
+            margin: 1rem 1rem 0.5rem;
+            color: #FFD700;
+        }
+        
+        .famous-scroll .card p {
+            margin: 0 1rem;
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+        
+        .famous-scroll .price {
+            margin: 1rem;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #FFD700;
+        }
+        
+        .famous-scroll .order-btn-small {
+            background: #ffffff7a;
+            color: #000000;
+            border: none;
+            padding: 0.6rem 1rem;
+            margin: 0 1rem 1rem;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            width: calc(100% - 2rem);
+            transition: 0.2s;
+        }
+        
+        .famous-scroll .order-btn-small:hover {
+            background: #f3131380;
+            transform: scale(0.98);
+        }
+        
+        .famous-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #FFD700;
+            color: #0a0a0a;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            z-index: 2;
+        }
+        
+        .card {
+            position: relative;
+        }
+        
+        @media (max-width: 768px) {
+            .famous-scroll .card {
+                min-width: 260px;
+                flex: 0 0 260px;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Sticky Navbar -->
     <nav class="navbar">
         <div class="nav-container">
-            <div class="logo">Masha ALLAH</div>
+            <div class="logo">MASHA ALLAH</div>
             <ul class="nav-links" id="navLinks">
                 <li><a href="index.html" class="active">Home</a></li>
-                <li><a href="article.html">Article</a></li>
+                <li><a href="article.html">Collection</a></li>
                 <li><a href="contact.html">Contact</a></li>
                 <li><a href="account.html"><i class="fas fa-user-circle"></i> Account</a></li>
             </ul>
@@ -45,12 +174,14 @@
         </div>
     </section>
 
-    <!-- Famous Items Section - Premium Fabrics -->
+    <!-- Famous Items Section - Exactly 4 Cards in a Horizontal Line -->
     <section class="top-picks">
         <div class="container">
-            <h2 class="section-title">FAMOUS UNSTITCHED FABRICS</h2>
-            <div class="scroll-cards" id="famousItemsContainer">
-                <div class="loading">Loading premium fabrics...</div>
+            <h2 class="section-title">⭐ FAMOUS UNSTITCHED FABRICS ⭐</h2>
+            <div class="famous-container">
+                <div class="famous-scroll" id="famousItemsContainer">
+                    <div class="loading">Loading premium fabrics...</div>
+                </div>
             </div>
         </div>
     </section>
@@ -67,7 +198,7 @@
                     <p><i class="fas fa-clock"></i> Daily: 10AM – 10PM</p>
                 </div>
                 <div class="map-placeholder">
-                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3441.1234567890123!2d73.0632358!3d30.2740893!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x393d39007933d7a9%3A0xf972342d37e98e3e!2sCloth%20Shop!5e0!3m2!1sen!2s!4v1234567890123!5m2!1sen!2s" 
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3441.1234567890123!2d73.0632358!3d30.2740893!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x393d39007933d7a9%3A0xf972342d37e98e3e!2sArifwala%2C%20Punjab%2C%20Pakistan!5e0!3m2!1sen!2s!4v1234567890123!5m2!1sen!2s" 
                         width="100%" height="250" style="border:0; border-radius: 12px;" allowfullscreen="" loading="lazy">
                     </iframe>
                 </div>
@@ -78,8 +209,8 @@
     <!-- Footer -->
     <footer>
         <div class="footer-content">
-            <div class="footer-logo">CLOTH SHOP</div>
-            <p>© 2025 Cloth Shop | Premium Unstitched Fabrics. All rights reserved.</p>
+            <div class="footer-logo">MASHA ALLAH</div>
+            <p>© 2025 Masha Allah | Premium Unstitched Fabrics. All rights reserved.</p>
             <div class="social-icons">
                 <i class="fab fa-instagram"></i>
                 <i class="fab fa-facebook"></i>
@@ -101,6 +232,7 @@
                 const { data: { user } } = await supabase.auth.getUser();
                 currentUser = user || null;
             } catch(e) {
+                console.warn("Session check failed:", e);
                 currentUser = null;
             }
         }
@@ -117,7 +249,7 @@
             }, 3000);
         }
 
-        // Handle order click - redirect to menu page (which should be renamed to fabric order page)
+        // Handle order click - redirect to menu page
         function handleOrderClick(itemId, itemName, itemPrice, itemCategory) {
             // Check if user is logged in
             if (!currentUser) {
@@ -128,71 +260,79 @@
                 return;
             }
             
-            // Store selected fabric item in sessionStorage to pre-fill on order page
+            // Store selected fabric item in sessionStorage
             sessionStorage.setItem('selectedItemId', itemId);
             sessionStorage.setItem('selectedItemName', itemName);
             sessionStorage.setItem('selectedItemPrice', itemPrice);
             sessionStorage.setItem('selectedItemCategory', itemCategory);
             
-            // Redirect to menu.html (which should handle fabric orders with meter selection)
+            // Redirect to menu.html
             window.location.href = 'menu.html';
         }
 
-        // Load famous fabrics (unstitched cloth only) from Supabase
+        // DIRECT FABRIC CATALOG - Exactly 4 famous items
+        const famousFabricsCatalog = [
+            { id: "fab_1", name: "Premium Lawn Fabric", description: "Pure Egyptian cotton lawn, breathable & soft, unstitched by meter.", price: 850, category: "Lawn", image_url: "https://placehold.co/400x300/1a3a1a/FFD700?text=LAWN+FABRIC", is_available: true, isFamous: true },
+            { id: "fab_2", name: "Raw Silk Charmeuse", description: "Luxurious raw silk with natural sheen, perfect for formal wear.", price: 2450, category: "Silk", image_url: "https://placehold.co/400x300/3a1a1a/FFD700?text=SILK+FABRIC", is_available: true, isFamous: true },
+            { id: "fab_3", name: "Linen Blend Earth Tone", description: "Breathable linen-cotton blend, textured finish, unstitched fabric.", price: 1290, category: "Linen", image_url: "https://placehold.co/400x300/3a3a1a/FFD700?text=LINEN+BLEND", is_available: true, isFamous: true },
+            { id: "fab_4", name: "Velvet Crimson", description: "Soft crushed velvet, luxurious drape, evening wear fabric.", price: 2190, category: "Velvet", image_url: "https://placehold.co/400x300/3a1a2a/FFD700?text=VELVET", is_available: true, isFamous: true }
+        ];
+
+        // Load famous fabrics - exactly 4 items
         async function loadFamousItems() {
             const container = document.getElementById('famousItemsContainer');
             if(!container) return;
+            
             try {
-                // Fetch fabric items (unstitched cloth) - filter by clothing/fabric categories
+                // Try to fetch from Supabase first
                 let { data, error } = await supabase
                     .from('menu_items')
                     .select('*')
                     .eq('is_available', true);
                     
-                if(error) throw error;
+                let fabricsToShow = [];
                 
-                // Filter to keep only fabric/cloth items (no food)
-                if(data && data.length) {
-                    const fabricKeywords = ['lawn', 'silk', 'cotton', 'linen', 'chiffon', 'velvet', 'jersey', 'organza', 'fabric', 'unstitched', 'meter', 'cloth', 'khaddar', 'voile', 'net', 'lace', 'suit', 'piece'];
-                    data = data.filter(item => {
+                // If Supabase has data, use it (filter for fabrics only)
+                if (!error && data && data.length > 0) {
+                    // Filter for fabric-like items
+                    const fabricKeywords = ['lawn', 'silk', 'cotton', 'linen', 'chiffon', 'velvet', 'jersey', 'fabric', 'unstitched', 'meter', 'cloth'];
+                    fabricsToShow = data.filter(item => {
                         const name = (item.name || '').toLowerCase();
-                        const desc = (item.description || '').toLowerCase();
                         const cat = (item.category || '').toLowerCase();
-                        return fabricKeywords.some(kw => name.includes(kw) || desc.includes(kw) || cat.includes(kw)) || 
-                               (!cat.includes('pizza') && !cat.includes('burger') && !cat.includes('dessert') && !cat.includes('food'));
+                        const desc = (item.description || '').toLowerCase();
+                        return fabricKeywords.some(kw => name.includes(kw) || cat.includes(kw) || desc.includes(kw));
                     });
+                    
+                    // If no fabric items found, use direct catalog (exactly 4)
+                    if (fabricsToShow.length === 0) {
+                        fabricsToShow = famousFabricsCatalog;
+                    } else {
+                        // Take only first 4 items
+                        fabricsToShow = fabricsToShow.slice(0, 4);
+                    }
+                } else {
+                    // Use direct catalog (exactly 4 items)
+                    fabricsToShow = famousFabricsCatalog;
                 }
                 
-                // If no fabric data or empty, provide fallback fabric collection
-                if(!data || data.length === 0) {
-                    const fallbackFabrics = [
-                        { id: "fab_1", name: "Premium Lawn Fabric", description: "Pure Egyptian cotton lawn, breathable & soft, unstitched by meter.", price: 850, category: "Lawn", image_url: "https://placehold.co/300x200/1a1a1a/FFD700?text=LAWN+FABRIC", points_reward: 15, is_available: true, isFamous: true },
-                        { id: "fab_2", name: "Raw Silk Charmeuse", description: "Luxurious raw silk with natural sheen, perfect for formal wear.", price: 2450, category: "Silk", image_url: "https://placehold.co/300x200/2a1a1a/FFD700?text=SILK+FABRIC", points_reward: 35, is_available: true, isFamous: true },
-                        { id: "fab_3", name: "Soft Cotton Voile", description: "Lightweight, airy cotton voile, ideal for daily wear kurtis.", price: 590, category: "Cotton", image_url: "https://placehold.co/300x200/1a2a2a/FFD700?text=COTTON+VOILE", points_reward: 10, is_available: true, isFamous: false },
-                        { id: "fab_4", name: "Linen Blend Earth Tone", description: "Breathable linen-cotton blend, textured finish, unstitched fabric.", price: 1290, category: "Linen", image_url: "https://placehold.co/300x200/2a2a1a/FFD700?text=LINEN+BLEND", points_reward: 20, is_available: true, isFamous: true },
-                        { id: "fab_5", name: "Digital Printed Chiffon", description: "Flowing chiffon with floral digital print, perfect for dupattas.", price: 990, category: "Chiffon", image_url: "https://placehold.co/300x200/1a1a2a/FFD700?text=CHIFFON", points_reward: 18, is_available: true, isFamous: false },
-                        { id: "fab_6", name: "Velvet Crimson", description: "Soft crushed velvet, luxurious drape, evening wear fabric.", price: 2190, category: "Velvet", image_url: "https://placehold.co/300x200/2a1a2a/FFD700?text=VELVET", points_reward: 30, is_available: true, isFamous: true }
-                    ];
-                    data = fallbackFabrics;
-                }
+                // Ensure we have exactly 4 items to show (or less if not enough)
+                const famousItems = fabricsToShow.slice(0, 4);
                 
-                if(!data || data.length === 0) {
-                    container.innerHTML = '<p>No fabrics available</p>';
+                // If no items, show fallback
+                if (famousItems.length === 0) {
+                    container.innerHTML = '<div class="loading">No fabrics available</div>';
                     return;
                 }
                 
-                // Mark famous fabrics (high quality or specific categories)
-                const famousItems = data.slice(0, 6).map(item => ({
-                    ...item,
-                    isFamous: item.category === 'Lawn' || item.category === 'Silk' || item.category === 'Velvet' || item.price > 1500 || item.name.includes('Premium')
-                }));
-                
+                // Render exactly 4 cards in horizontal line
                 container.innerHTML = famousItems.map(item => `
                     <div class="card">
-                        ${item.isFamous ? '<div class="famous-badge">⭐ FAMOUS</div>' : ''}
-                        <img src="${item.image_url || 'https://placehold.co/300x200/111111/FFD700?text=Fabric'}" alt="${escapeHtml(item.name)}" onerror="this.src='https://placehold.co/300x200/111111/FFD700?text=Fabric'">
+                        <div class="famous-badge">⭐ ${item.category === 'Lawn' || item.category === 'Silk' || item.price > 1500 ? 'PREMIUM' : 'FAMOUS'}</div>
+                        <img src="${item.image_url || 'https://placehold.co/400x300/1a1a1a/FFD700?text=FABRIC'}" 
+                             alt="${escapeHtml(item.name)}" 
+                             onerror="this.src='https://placehold.co/400x300/1a1a1a/FFD700?text='+encodeURIComponent('${escapeHtml(item.name).substring(0,15)}')">
                         <h3>${escapeHtml(item.name)}</h3>
-                        <p>${escapeHtml(item.description?.substring(0,60) || 'Premium unstitched fabric by meter')}</p>
+                        <p>${escapeHtml((item.description || 'Premium unstitched fabric by meter').substring(0, 70))}</p>
                         <div class="price">PKR ${item.price}/meter</div>
                         <button class="order-btn-small" onclick="handleOrderClick('${item.id}', '${escapeHtml(item.name)}', ${item.price}, '${escapeHtml(item.category)}')">
                             Order by Meter <i class="fas fa-cut"></i>
@@ -201,8 +341,20 @@
                 `).join('');
                 
             } catch(err) {
-                console.error(err);
-                container.innerHTML = '<p>Failed to load fabrics</p>';
+                console.error("Error loading fabrics:", err);
+                // Show direct catalog as fallback (exactly 4 items)
+                container.innerHTML = famousFabricsCatalog.map(item => `
+                    <div class="card">
+                        <div class="famous-badge">⭐ ${item.category === 'Lawn' || item.category === 'Silk' || item.price > 1500 ? 'PREMIUM' : 'FAMOUS'}</div>
+                        <img src="${item.image_url}" alt="${escapeHtml(item.name)}" onerror="this.src='https://placehold.co/400x300/1a1a1a/FFD700?text=FABRIC'">
+                        <h3>${escapeHtml(item.name)}</h3>
+                        <p>${escapeHtml((item.description || 'Premium unstitched fabric by meter').substring(0, 70))}</p>
+                        <div class="price">PKR ${item.price}/meter</div>
+                        <button class="order-btn-small" onclick="handleOrderClick('${item.id}', '${escapeHtml(item.name)}', ${item.price}, '${escapeHtml(item.category)}')">
+                            Order by Meter <i class="fas fa-cut"></i>
+                        </button>
+                    </div>
+                `).join('');
             }
         }
 
@@ -230,6 +382,9 @@
                 });
             }
         });
+        
+        // Expose handleOrderClick globally
+        window.handleOrderClick = handleOrderClick;
     </script>
 </body>
 </html>
