@@ -6,31 +6,12 @@
     <title>ThreadVault Admin | Fabric Management</title>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <!-- Load Supabase CDN first -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<!-- Then load your config -->
-<script src="supabase-config.js"></script>
-
-<!-- Then your custom script -->
-<script>
-    // Now you can use all functions
-    async function loadProducts() {
-        const result = await getAllFabrics();
-        if (result.success) {
-            console.log('Products:', result.data);
-        } else {
-            console.error('Error:', result.error);
-        }
-    }
-    
-    loadProducts();
-</script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #0a0a0a; font-family: 'Poppins', sans-serif; }
 
-        /* LOGIN SCREEN */
         .login-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at 20% 30%, #0a0a0a, #030303);
@@ -52,7 +33,6 @@
         .login-btn:hover { transform: scale(1.02); }
         .error-msg { color: #ff5555; font-size: 0.85rem; margin-top: 1rem; }
 
-        /* ADMIN PANEL */
         .admin-panel { display: none; }
         .admin-header { background: #0a0a0a; padding: 1rem 2rem; border-bottom: 2px solid #FFD700; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
         .admin-header h1 { font-family: 'Bebas Neue', cursive; color: #FFD700; font-size: 1.9rem; }
@@ -67,66 +47,30 @@
         .section { display: none; }
         .section.active { display: block; }
 
-        /* CARDS & TABLES */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 1.5rem; margin-bottom: 2rem; }
         .stat-card { background: #fffffe; border-left: 5px solid #020202; border-radius: 1rem; padding: 1.5rem; }
         .stat-card .value { font-size: 2rem; font-weight: bold; color: #FFD700; }
         .admin-table { width: 100%; border-collapse: collapse; background: #fff6f6; border-radius: 1rem; overflow: hidden; }
         .admin-table th, .admin-table td { border: 1px solid #333; padding: 0.8rem; text-align: left; }
         .admin-table th { background: #f3ff0c; color: #000000; }
-        .btn-primary { background: #FFD700; color: #0a0a0a; border: none; padding: 0.7rem 1.5rem; border-radius: 2rem; font-weight: bold; cursor: pointer; margin: 0.5rem 0; transition: 0.2s; }
-        .btn-primary:hover { transform: scale(1.02); }
+        .btn-primary { background: #FFD700; color: #0a0a0a; border: none; padding: 0.7rem 1.5rem; border-radius: 2rem; font-weight: bold; cursor: pointer; margin: 0.5rem 0; }
         .btn-edit { background: #FFD700; color: #000000; border: none; padding: 0.3rem 0.8rem; border-radius: 1rem; cursor: pointer; margin-right: 0.5rem; }
         .btn-danger { background: #dc2626; color: white; border: none; padding: 0.3rem 0.8rem; border-radius: 1rem; cursor: pointer; }
 
-        /* SALE BADGE in admin table */
-        .sale-badge-admin {
-            display: inline-block;
-            background: #dc2626;
-            color: white;
-            padding: 0.2rem 0.6rem;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            font-weight: bold;
-        }
-        .no-sale-badge {
-            display: inline-block;
-            background: #444;
-            color: #aaa;
-            padding: 0.2rem 0.6rem;
-            border-radius: 20px;
-            font-size: 0.7rem;
-        }
+        .meter-badge { display: inline-block; background: #FFD700; color: #0a0a0a; padding: 0.2rem 0.5rem; border-radius: 20px; font-size: 0.7rem; font-weight: bold; margin-left: 0.5rem; }
+        .order-items-list { font-size: 0.85rem; max-width: 250px; }
+        .order-item-row { border-bottom: 1px solid #333; padding: 0.2rem 0; }
+        .address-cell { max-width: 200px; word-wrap: break-word; white-space: normal; }
+        .date-filter-row { display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .date-filter-row label { color: #FFD700; }
+        .date-filter-row input, .date-filter-row select { background: #222; color: white; border: 1px solid #FFD700; padding: 0.5rem; border-radius: 8px; }
+        .refresh-btn { background: #FFD700; color: #0a0a0a; border: none; padding: 0.5rem 1rem; border-radius: 2rem; cursor: pointer; font-weight: bold; }
 
-        /* METER BADGE */
-        .meter-badge {
-            display: inline-block;
-            background: #FFD700;
-            color: #0a0a0a;
-            padding: 0.2rem 0.5rem;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            font-weight: bold;
-            margin-left: 0.5rem;
-        }
-        .order-items-list {
-            font-size: 0.85rem;
-            max-width: 250px;
-        }
-        .order-item-row {
-            border-bottom: 1px solid #333;
-            padding: 0.2rem 0;
-        }
-
-        /* MODAL WITH DUAL UPLOAD */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 1100; justify-content: center; align-items: center; }
         .modal-card { background: #111; border: 2px solid #FFD700; border-radius: 2rem; padding: 2rem; max-width: 550px; width: 90%; max-height: 90vh; overflow-y: auto; }
         .form-group { margin-bottom: 1.2rem; }
         .form-group label { color: #FFD700; display: block; margin-bottom: 0.4rem; font-weight: 500; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.7rem; background: #1e1e1e; border: 1px solid #333; border-radius: 0.8rem; color: white; }
-        .form-group.checkbox-group { display: flex; align-items: center; gap: 0.5rem; }
-        .form-group.checkbox-group label { margin-bottom: 0; cursor: pointer; }
-        .form-group.checkbox-group input { width: auto; transform: scale(1.2); cursor: pointer; }
         .image-option-tabs { display: flex; gap: 1rem; margin: 1rem 0; }
         .image-tab { flex: 1; text-align: center; background: #1e1e1e; padding: 0.5rem; border-radius: 2rem; cursor: pointer; color: #aaa; }
         .image-tab.active { background: #FFD700; color: #0a0a0a; font-weight: bold; }
@@ -142,12 +86,13 @@
             .admin-layout { flex-direction: column; }
             .sidebar { width: 100%; display: flex; flex-wrap: wrap; gap: 0.5rem; }
             .sidebar button { width: auto; flex: 1; justify-content: center; }
+            .admin-table { font-size: 0.8rem; }
+            .address-cell { max-width: 120px; }
         }
     </style>
 </head>
 <body>
 
-<!-- LOGIN SCREEN -->
 <div id="loginScreen" class="login-container">
     <div class="login-card">
         <div class="login-icon"><i class="fas fa-lock"></i></div>
@@ -159,7 +104,6 @@
     </div>
 </div>
 
-<!-- MAIN ADMIN PANEL -->
 <div id="adminPanel" class="admin-panel">
     <div class="admin-header">
         <h1><i class="fas fa-cut"></i> THREADVAULT · ADMIN</h1>
@@ -172,7 +116,6 @@
             <button onclick="switchSection('orders')" id="btnOrders"><i class="fas fa-shopping-cart"></i> Fabric Orders</button>
         </div>
         <div class="main-content">
-            <!-- DASHBOARD -->
             <div id="dashboardSection" class="section active">
                 <h2>📊 Dashboard</h2>
                 <div class="stats-grid">
@@ -182,39 +125,53 @@
                 </div>
             </div>
 
-            <!-- FABRIC CATALOG MANAGEMENT -->
             <div id="menuSection" class="section">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 1rem;">
-                    <h2>🧵 Fabric Catalog (Unstitched)</h2>
-                    <button class="btn-primary" onclick="openItemModal()"><i class="fas fa-plus"></i> Add New Fabric</button>
-                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;"><h2>🧵 Fabric Catalog (Unstitched)</h2><button class="btn-primary" onclick="openItemModal()"><i class="fas fa-plus"></i> Add New Fabric</button></div>
                 <div style="margin: 1rem 0; display: flex; gap: 0.5rem; flex-wrap: wrap;" id="categoryFilters"></div>
-                <div style="overflow-x: auto;">
-                    <table class="admin-table">
-                        <thead>
-                            <tr><th>Image</th><th>Fabric Name</th><th>Category</th><th>Price/Meter</th><th>Sale</th><th>Status</th><th>Actions</th></thead>
-                        <tbody id="menuTableBody"><tr><td colspan="7" style="text-align:center;">Loading fabrics...</td></tbody>
-                    </table>
-                </div>
+                <table class="admin-table"><thead><tr><th>Image</th><th>Fabric Name</th><th>Category</th><th>Price/Meter</th><th>Status</th><th>Actions</th></tr></thead><tbody id="menuTableBody"><tr><td colspan="6">Loading fabrics...</td></tr></tbody>
+                </table>
             </div>
 
-            <!-- ORDERS (WITH METER TRACKING) -->
             <div id="ordersSection" class="section">
-                <h2>📦 Fabric Orders (by Meter)</h2>
-                <div style="margin-bottom: 1rem;"><label style="color:#FFD700;">Filter by date:</label><input type="date" id="orderFilterDate" onchange="fetchOrders()" style="background:#222; color:white; border:1px solid #FFD700; padding:0.3rem; border-radius:8px; margin-left:1rem;"></div>
-                <div style="overflow-x: auto;">
-                    <table class="admin-table">
-                        <thead>
-                            <tr><th>ID</th><th>Customer</th><th>Phone</th><th>Fabric (Meters)</th><th>Total (PKR)</th><th>Status</th><th>Date</th><th>Update</th></thead>
-                        <tbody id="ordersTableBody"><td><td colspan="8" style="text-align:center;">Loading orders...</td></tbody>
-                    </table>
+                <h2>📦 Fabric Orders (by Meter) with Address</h2>
+                <div class="date-filter-row">
+                    <label><i class="fas fa-calendar"></i> Filter by Date:</label>
+                    <input type="date" id="orderFilterDate" onchange="applyDateFilter()">
+                    <select id="datePreset" onchange="presetDateChange()">
+                        <option value="">All Orders</option>
+                        <option value="today">Today</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="last7">Last 7 Days</option>
+                        <option value="thisMonth">This Month</option>
+                        <option value="lastMonth">Last Month</option>
+                    </select>
+                    <button class="refresh-btn" onclick="fetchOrders()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                    <button class="refresh-btn" onclick="clearDateFilter()" style="background:#333;"><i class="fas fa-times"></i> Clear Filter</button>
+                </div>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Customer</th>
+                            <th>Phone</th>
+                            <th>Address</th>
+                            <th>Fabric (Meters)</th>
+                            <th>Total (PKR)</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Update</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTableBody"><tr><td colspan="9">Loading orders...</td></tr></tbody>
+                </table>
+                <div style="margin-top: 1rem; text-align: center; color: #aaa; font-size: 0.8rem;">
+                    <i class="fas fa-database"></i> Orders are automatically saved. Use date filters to view old orders.
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- MODAL FOR ADD/EDIT FABRIC ITEM -->
 <div id="itemModal" class="modal">
     <div class="modal-card">
         <h3 id="modalTitle">Add / Edit Fabric</h3>
@@ -230,7 +187,7 @@
             </div>
             <div id="localPanel" class="image-upload-panel">
                 <input type="file" id="localImageFile" accept="image/*" onchange="previewLocalImage(this)">
-                <div class="preview-box"><img id="localPreview" src="https://placehold.co/100x100/333/FFD700?text=Local"></div>
+                <div class="preview-box"><img id="localPreview" src="https://placehold.co/100x100/333/FFD700?text=Select+Image"></div>
                 <div class="progress-bar" id="uploadProgressBar"><div class="progress-fill" id="uploadFill"></div></div>
             </div>
         </div>
@@ -238,28 +195,21 @@
         <div class="form-group"><label>Description</label><textarea id="itemDesc" rows="2" placeholder="Soft, breathable, unstitched fabric..."></textarea></div>
         <div class="form-group"><label>Price per Meter (PKR) *</label><input type="number" id="itemPrice" placeholder="850"></div>
         <div class="form-group"><label>Category</label><select id="itemCategory"><option>Lawn</option><option>Silk</option><option>Cotton</option><option>Linen</option><option>Chiffon</option><option>Velvet</option><option>Jersey</option><option>Other</option></select></div>
-        <div class="form-group checkbox-group">
-            <input type="checkbox" id="itemOnSale">
-            <label for="itemOnSale">🔥 On Sale (Sell Tag will appear on website)</label>
-        </div>
-        <div class="form-group checkbox-group">
-            <input type="checkbox" id="itemAvailable" checked>
-            <label for="itemAvailable">✓ Available</label>
-        </div>
+        <div class="form-group"><label><input type="checkbox" id="itemAvailable" checked> Available</label></div>
         <button class="btn-primary" onclick="saveMenuItemWrapper()">💾 Save Fabric</button>
-        <button onclick="closeItemModal()" style="background:#333; color:white; border:none; padding:0.5rem 1rem; border-radius:2rem; margin-left:0.5rem; cursor:pointer;">Cancel</button>
+        <button onclick="closeItemModal()" style="background:#333; color:white; border:none; padding:0.5rem 1rem; border-radius:2rem; margin-left:0.5rem;">Cancel</button>
     </div>
 </div>
 
 <div id="globalToast" class="toast"></div>
 
 <script>
-    // ---------- CREDENTIALS ----------
     const ADMIN_CRED = { user: "cloth", pass: "cloth12" };
     let logged = false;
     let allMenu = [];
     let currentImageOption = "url";
     let localFileToUpload = null;
+    let currentDateFilter = "";
 
     function toast(msg, isErr = false) { 
         let t = document.getElementById('globalToast'); 
@@ -270,7 +220,6 @@
         setTimeout(() => t.style.display = 'none', 3000); 
     }
 
-    // ---------- LOGIN ----------
     window.attemptLogin = function() {
         let u = document.getElementById('adminUser').value.trim();
         let p = document.getElementById('adminPass').value;
@@ -281,8 +230,7 @@
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('adminPanel').style.display = 'block';
             document.getElementById('adminNameSpan').innerText = u;
-            initStorageBucket();
-            loadAllAdminData();
+            initStorageAndLoad();
         } else { 
             errDiv.innerText = '❌ Invalid credentials'; 
             document.getElementById('adminPass').value = ''; 
@@ -295,37 +243,63 @@
         document.getElementById('loginScreen').style.display = 'flex'; 
     };
 
-    // ---------- STORAGE ----------
-    async function initStorageBucket() {
-        try { 
-            let { data: buckets } = await supabase.storage.listBuckets(); 
-            if (!buckets?.some(b => b.name === 'fabric-images')) { 
-                await supabase.storage.createBucket('fabric-images', { 
-                    public: true, 
-                    allowedMimeTypes: ['image/png','image/jpeg','image/jpg','image/gif'], 
-                    fileSizeLimit: 2097152 
-                }); 
-            } 
-        } catch(e) { console.warn(e); }
+    async function initStorageAndLoad() {
+        await ensureBucketExists();
+        await loadAllAdminData();
+    }
+
+    async function ensureBucketExists() {
+        try {
+            const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+            if (listError) {
+                console.error("Error listing buckets:", listError);
+                return false;
+            }
+            const bucketExists = buckets?.some(b => b.name === 'fabric-images');
+            if (!bucketExists) {
+                const { error: createError } = await supabase.storage.createBucket('fabric-images', { 
+                    public: true,
+                    allowedMimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'],
+                    fileSizeLimit: 2097152
+                });
+                if (createError) {
+                    toast("Cannot create storage bucket: " + createError.message, true);
+                    return false;
+                }
+            }
+            return true;
+        } catch(e) {
+            console.error("Storage init error:", e);
+            return false;
+        }
     }
 
     async function uploadLocalImage(file) { 
         if (!file) return null; 
+        if (file.size > 2 * 1024 * 1024) {
+            toast("Image too large! Max 2MB", true);
+            return null;
+        }
         let ext = file.name.split('.').pop(); 
-        let fname = `fabrics/${Date.now()}_${Math.random().toString(36).substring(2,8)}.${ext}`; 
+        let fname = `fabrics/${Date.now()}_${Math.random().toString(36).substring(2,10)}.${ext}`; 
         let progDiv = document.getElementById('uploadProgressBar'); 
         let fill = document.getElementById('uploadFill'); 
         if(progDiv) progDiv.style.display = 'block'; 
         fill.style.width = '30%'; 
-        let { error, data } = await supabase.storage.from('fabric-images').upload(fname, file); 
-        fill.style.width = '100%'; 
-        setTimeout(()=>{ if(progDiv) progDiv.style.display = 'none'; fill.style.width = '0%'; }, 800); 
-        if(error) { 
-            toast('Upload failed: '+error.message, true); 
-            return null; 
-        } 
-        let { data: { publicUrl } } = supabase.storage.from('fabric-images').getPublicUrl(fname); 
-        return publicUrl; 
+        try {
+            const { error, data } = await supabase.storage.from('fabric-images').upload(fname, file);
+            fill.style.width = '100%'; 
+            setTimeout(()=>{ if(progDiv) progDiv.style.display = 'none'; fill.style.width = '0%'; }, 800); 
+            if(error) { 
+                toast('Upload failed: ' + error.message, true); 
+                return null; 
+            } 
+            const { data: { publicUrl } } = supabase.storage.from('fabric-images').getPublicUrl(fname); 
+            return publicUrl; 
+        } catch(err) {
+            toast('Upload error: ' + err.message, true);
+            return null;
+        }
     }
 
     window.selectImageOption = function(opt) { 
@@ -351,7 +325,6 @@
         else document.getElementById('urlPreview').src = 'https://placehold.co/100x100/333/FFD700?text=Fabric'; 
     }
 
-    // ---------- LOAD DATA ----------
     async function loadAllAdminData() { 
         await loadDashboardStats(); 
         await loadMenuItems(); 
@@ -359,82 +332,55 @@
     }
     
     async function loadDashboardStats() { 
-        try {
-            let { data: items } = await supabase.from('menu_items').select('id'); 
-            let { data: orders } = await supabase.from('orders').select('total_price'); 
-            let revenue = orders?.reduce((s,o)=>s+(o.total_price||0),0)||0; 
-            document.getElementById('statItems').innerText = items?.length||0; 
-            document.getElementById('statOrders').innerText = orders?.length||0; 
-            document.getElementById('statRevenue').innerText = 'PKR '+revenue;
-        } catch(e) { console.error("Dashboard error:", e); }
+        let { data: items } = await supabase.from('menu_items').select('id'); 
+        let { data: orders } = await supabase.from('orders').select('total_price'); 
+        let revenue = orders?.reduce((s,o)=>s+(o.total_price||0),0)||0; 
+        document.getElementById('statItems').innerText = items?.length||0; 
+        document.getElementById('statOrders').innerText = orders?.length||0; 
+        document.getElementById('statRevenue').innerText = 'PKR '+revenue; 
     }
 
     async function loadMenuItems() { 
-        try {
-            let { data, error } = await supabase.from('menu_items').select('*').order('created_at', { ascending: false }); 
-            if(error) throw error;
-            allMenu = data || []; 
+        let { data, error } = await supabase.from('menu_items').select('*').order('created_at', { ascending: false }); 
+        if(!error) { 
+            allMenu = data||[]; 
             renderMenuTable(); 
             renderCategoryFilters();
-        } catch(e) { 
-            console.error("Menu load error:", e);
-            toast('Error loading menu: ' + e.message, true);
-            document.getElementById('menuTableBody').innerHTML = '<tr><td colspan="7">Error loading fabrics</td></tr>';
-        }
+        } else toast('menu error',true); 
     }
     
     function renderMenuTable() { 
         let tbody = document.getElementById('menuTableBody'); 
         if(!allMenu.length) { 
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No fabrics found. Click "Add New Fabric" to create one.</td></tr>'; 
+            tbody.innerHTML = '<tr><td colspan="6">No fabrics found</td></tr>'; 
             return; 
         } 
-        tbody.innerHTML = allMenu.map(m => {
-            const saleBadge = m.on_sale ? '<span class="sale-badge-admin">🔥 ON SALE</span>' : '<span class="no-sale-badge">—</span>';
-            return `
+        tbody.innerHTML = allMenu.map(m => `
             <tr>
-                <td><img src="${m.image_url || 'https://placehold.co/50x50/333/FFD700?text=Fabric'}" width="50" height="50" style="border-radius:8px; object-fit:cover;" onerror="this.src='https://placehold.co/50x50/333/FFD700?text=Fabric'"></td>
-                <td><strong>${escapeHtml(m.name)}</strong><br><small>${escapeHtml((m.description || '').substring(0,50))}</small></td>
-                <td>${escapeHtml(m.category)}</td>
+                <td><img src="${m.image_url||'https://placehold.co/50x50/333/FFD700?text=Fabric'}" width="50" height="50" style="border-radius:8px; object-fit:cover;" onerror="this.src='https://placehold.co/50x50/333/FFD700?text=Fabric'"></td>
+                <td><strong>${escapeHtml(m.name)}</strong><br><small>${escapeHtml(m.description?.substring(0,50)||'')}</small></td>
+                <td>${m.category}</td>
                 <td>PKR ${m.price}/meter</td>
-                <td>${saleBadge}</td>
                 <td>${m.is_available ? '✅ Available' : '❌ Unavailable'}</td>
                 <td><button class="btn-edit" onclick="openEditItem('${m.id}')">Edit</button> <button class="btn-danger" onclick="deleteItem('${m.id}')">Delete</button></td>
             </tr>
-        `}).join(''); 
+        `).join(''); 
     }
     
     function renderCategoryFilters() { 
         let cats = [...new Set(allMenu.map(i=>i.category))]; 
         let container = document.getElementById('categoryFilters'); 
         if(!container) return; 
-        container.innerHTML = `<button onclick="filterMenu('all')" style="background:#FFD700; color:#000; border:none; padding:0.3rem 1rem; border-radius:20px; cursor:pointer;">All</button>` + 
-            cats.map(c=>`<button onclick="filterMenu('${c}')" style="background:#333; color:white; border:none; padding:0.3rem 1rem; border-radius:20px; cursor:pointer;">${escapeHtml(c)}</button>`).join(''); 
+        container.innerHTML = `<button onclick="filterMenu('all')" style="background:#FFD700; color:#000; border:none; padding:0.3rem 1rem; border-radius:20px;">All</button>`+cats.map(c=>`<button onclick="filterMenu('${c}')" style="background:#333; color:white; border:none; padding:0.3rem 1rem; border-radius:20px;">${c}</button>`).join(''); 
     }
     
     window.filterMenu = function(cat) { 
-        if(cat === 'all') {
-            renderMenuTable();
-        } else { 
-            let filtered = allMenu.filter(i => i.category === cat); 
-            let tbody = document.getElementById('menuTableBody');
-            if(!filtered.length) {
-                tbody.innerHTML = '<tr><td colspan="7">No fabrics in this category</td></tr>';
-                return;
-            }
-            tbody.innerHTML = filtered.map(m => {
-                const saleBadge = m.on_sale ? '<span class="sale-badge-admin">🔥 ON SALE</span>' : '<span class="no-sale-badge">—</span>';
-                return `<tr>
-                    <td><img src="${m.image_url || 'https://placehold.co/50x50/333/FFD700?text=Fabric'}" width="50" height="50" style="border-radius:8px; object-fit:cover;"></td>
-                    <td><strong>${escapeHtml(m.name)}</strong></td>
-                    <td>${escapeHtml(m.category)}</td>
-                    <td>PKR ${m.price}/meter</td>
-                    <td>${saleBadge}</td>
-                    <td>${m.is_available ? '✅ Available' : '❌ Unavailable'}</td>
-                    <td><button class="btn-edit" onclick="openEditItem('${m.id}')">Edit</button> <button class="btn-danger" onclick="deleteItem('${m.id}')">Delete</button></td>
-                </tr>`;
-            }).join('');
-        }
+        if(cat==='all') renderMenuTable(); 
+        else { 
+            let filtered = allMenu.filter(i=>i.category===cat); 
+            let tbody = document.getElementById('menuTableBody'); 
+            tbody.innerHTML = filtered.map(m => `<tr>...</tr>`).join(''); 
+        } 
     };
 
     window.openItemModal = function() { 
@@ -444,29 +390,27 @@
         document.getElementById('itemPrice').value = ''; 
         document.getElementById('itemCategory').value = 'Lawn'; 
         document.getElementById('itemAvailable').checked = true; 
-        document.getElementById('itemOnSale').checked = false;
         document.getElementById('imageUrlInput').value = ''; 
         document.getElementById('urlPreview').src = 'https://placehold.co/100x100/333/FFD700?text=Fabric'; 
-        document.getElementById('localPreview').src = 'https://placehold.co/100x100/333/FFD700?text=Local'; 
+        document.getElementById('localPreview').src = 'https://placehold.co/100x100/333/FFD700?text=Select+Image'; 
         localFileToUpload = null; 
         selectImageOption('url'); 
         document.getElementById('itemModal').style.display = 'flex'; 
     };
     
     window.openEditItem = async function(id) { 
-        let item = allMenu.find(i => i.id === id); 
+        let item = allMenu.find(i=>i.id===id); 
         if(!item) return; 
         document.getElementById('editId').value = item.id; 
-        document.getElementById('itemName').value = item.name || ''; 
-        document.getElementById('itemDesc').value = item.description || ''; 
+        document.getElementById('itemName').value = item.name; 
+        document.getElementById('itemDesc').value = item.description||''; 
         document.getElementById('itemPrice').value = item.price; 
-        document.getElementById('itemCategory').value = item.category || 'Lawn'; 
-        document.getElementById('itemAvailable').checked = item.is_available === true; 
-        document.getElementById('itemOnSale').checked = item.on_sale === true;
+        document.getElementById('itemCategory').value = item.category; 
+        document.getElementById('itemAvailable').checked = item.is_available; 
         let existingImg = item.image_url || ''; 
         document.getElementById('imageUrlInput').value = existingImg; 
         document.getElementById('urlPreview').src = existingImg || 'https://placehold.co/100x100/333/FFD700?text=Fabric'; 
-        document.getElementById('localPreview').src = 'https://placehold.co/100x100/333/FFD700?text=Local'; 
+        document.getElementById('localPreview').src = 'https://placehold.co/100x100/333/FFD700?text=Select+Image'; 
         localFileToUpload = null; 
         selectImageOption('url'); 
         document.getElementById('itemModal').style.display = 'flex'; 
@@ -476,8 +420,8 @@
         let id = document.getElementById('editId').value; 
         let name = document.getElementById('itemName').value.trim(); 
         let price = parseInt(document.getElementById('itemPrice').value); 
-        if(!name || !price || isNaN(price)) { 
-            toast('Name & valid Price required', true); 
+        if(!name || !price) { 
+            toast('Name & Price required', true); 
             return; 
         } 
         let finalImageUrl = ''; 
@@ -497,38 +441,36 @@
         } 
         let payload = { 
             name, 
-            description: document.getElementById('itemDesc').value || '', 
+            description: document.getElementById('itemDesc').value, 
             price, 
             category: document.getElementById('itemCategory').value, 
-            is_available: document.getElementById('itemAvailable').checked,
-            on_sale: document.getElementById('itemOnSale').checked,
+            points_reward: 0,
+            is_available: document.getElementById('itemAvailable').checked, 
             image_url: finalImageUrl || null 
         }; 
         let result; 
-        try {
-            if(id) {
-                result = await supabase.from('menu_items').update(payload).eq('id', id); 
-            } else { 
-                result = await supabase.from('menu_items').insert([payload]); 
-            } 
-            if(result.error) throw result.error;
-            toast(id ? 'Fabric updated successfully!' : 'Fabric added successfully!'); 
-            closeItemModal(); 
-            await loadMenuItems(); 
-            await loadDashboardStats(); 
-        } catch(e) { 
-            toast('DB error: '+e.message, true); 
-        }
+        if(id) result = await supabase.from('menu_items').update(payload).eq('id', id); 
+        else result = await supabase.from('menu_items').insert([payload]); 
+        if(result.error) { 
+            toast('DB error: '+result.error.message, true); 
+            return; 
+        } 
+        toast(id ? 'Fabric updated' : 'Fabric added'); 
+        closeItemModal(); 
+        await loadMenuItems(); 
+        await loadDashboardStats(); 
+        renderCategoryFilters(); 
     };
     
     window.deleteItem = async function(id) { 
-        if(confirm('Delete permanently? This action cannot be undone.')) { 
+        if(confirm('Delete permanently?')) { 
             let { error } = await supabase.from('menu_items').delete().eq('id', id); 
             if(error) toast(error.message, true); 
             else { 
                 toast('Fabric deleted'); 
                 await loadMenuItems(); 
                 await loadDashboardStats(); 
+                renderCategoryFilters(); 
             } 
         } 
     };
@@ -538,58 +480,141 @@
         localFileToUpload = null; 
     };
 
-    // ORDERS WITH METER TRACKING
+    // DATE FILTER FUNCTIONS
+    function getDateRange(preset) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        switch(preset) {
+            case 'today':
+                return { start: today, end: new Date(today.getTime() + 86400000) };
+            case 'yesterday':
+                let yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
+                return { start: yesterday, end: today };
+            case 'last7':
+                let last7 = new Date(today);
+                last7.setDate(last7.getDate() - 7);
+                return { start: last7, end: new Date(today.getTime() + 86400000) };
+            case 'thisMonth':
+                let startMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                return { start: startMonth, end: new Date(today.getTime() + 86400000) };
+            case 'lastMonth':
+                let lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                let lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+                lastMonthEnd.setHours(23, 59, 59, 999);
+                return { start: lastMonthStart, end: lastMonthEnd };
+            default:
+                return null;
+        }
+    }
+
+    window.presetDateChange = function() {
+        let preset = document.getElementById('datePreset').value;
+        if(preset) {
+            let range = getDateRange(preset);
+            if(range) {
+                let startStr = range.start.toISOString().split('T')[0];
+                let endStr = range.end.toISOString().split('T')[0];
+                document.getElementById('orderFilterDate').value = '';
+                currentDateFilter = { start: startStr, end: endStr };
+                fetchOrders();
+            }
+        } else {
+            currentDateFilter = "";
+            document.getElementById('orderFilterDate').value = '';
+            fetchOrders();
+        }
+    };
+
+    window.applyDateFilter = function() {
+        let date = document.getElementById('orderFilterDate').value;
+        document.getElementById('datePreset').value = '';
+        if(date) {
+            currentDateFilter = { start: date, end: date };
+        } else {
+            currentDateFilter = "";
+        }
+        fetchOrders();
+    };
+
+    window.clearDateFilter = function() {
+        document.getElementById('orderFilterDate').value = '';
+        document.getElementById('datePreset').value = '';
+        currentDateFilter = "";
+        fetchOrders();
+    };
+
+    // ORDERS WITH ADDRESS COLUMN AND DATE FILTER
     window.fetchOrders = async function() {
-        try {
-            let date = document.getElementById('orderFilterDate').value;
-            let query = supabase.from('orders').select('*').order('created_at',{ascending:false});
-            if(date) { 
-                let start = date+'T00:00:00', end = date+'T23:59:59'; 
-                query = query.gte('created_at',start).lte('created_at',end); 
+        let q = supabase.from('orders').select('*').order('created_at', { ascending: false });
+        
+        if(currentDateFilter && typeof currentDateFilter === 'object') {
+            let startDate = currentDateFilter.start + 'T00:00:00';
+            let endDate = currentDateFilter.end + 'T23:59:59';
+            q = q.gte('created_at', startDate).lte('created_at', endDate);
+        } else if(currentDateFilter && typeof currentDateFilter === 'string') {
+            let startDate = currentDateFilter + 'T00:00:00';
+            let endDate = currentDateFilter + 'T23:59:59';
+            q = q.gte('created_at', startDate).lte('created_at', endDate);
+        }
+        
+        let { data } = await q;
+        let tbody = document.getElementById('ordersTableBody');
+        if(!data || !data.length) { 
+            tbody.innerHTML = '<tr><td colspan="9">No fabric orders found for selected date range</td></tr>'; 
+            return; 
+        }
+        
+        tbody.innerHTML = data.map(o => {
+            let itemsHtml = '';
+            if(o.items_ordered && Array.isArray(o.items_ordered)) {
+                itemsHtml = o.items_ordered.map(item => {
+                    let meterInfo = '';
+                    if(item.meters) meterInfo = `<span class="meter-badge">📏 ${item.meters} meters</span>`;
+                    else if(item.size && item.category === 'Fabric') meterInfo = `<span class="meter-badge">📏 ${item.size} m</span>`;
+                    return `<div class="order-item-row">${escapeHtml(item.name || 'Fabric')} ×${item.qty || 1} ${meterInfo}</div>`;
+                }).join('');
+            } else if(o.items_ordered && typeof o.items_ordered === 'object') {
+                let meters = o.items_ordered.meters || '';
+                itemsHtml = `<div class="order-item-row">${escapeHtml(o.items_ordered.name || 'Fabric')} ${meters ? `(${meters}m)` : ''}</div>`;
             }
-            let { data, error } = await query;
-            if(error) throw error;
-            let tbody = document.getElementById('ordersTableBody');
-            if(!data || !data.length) { 
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No fabric orders found</td></tr>'; 
-                return; 
-            }
-            tbody.innerHTML = data.map(o => {
-                let itemsHtml = '';
-                if(o.items_ordered && Array.isArray(o.items_ordered)) {
-                    itemsHtml = o.items_ordered.map(item => {
-                        let meterInfo = '';
-                        if(item.meters) meterInfo = `<span class="meter-badge">📏 ${item.meters} meters</span>`;
-                        return `<div class="order-item-row">${escapeHtml(item.name || 'Fabric')} ${meterInfo}</div>`;
-                    }).join('');
-                } else if(o.items_ordered && typeof o.items_ordered === 'object') {
-                    let meters = o.items_ordered.meters || '';
-                    itemsHtml = `<div class="order-item-row">${escapeHtml(o.items_ordered.name || 'Fabric')} ${meters ? `(${meters}m)` : ''}</div>`;
-                }
-                return `<tr>
-                    <td>${o.id.slice(0,8)}</td>
-                    <td>${escapeHtml(o.customer_name||'-')}</td>
-                    <td>${escapeHtml(o.customer_phone||'-')}</td>
-                    <td class="order-items-list">${itemsHtml || '-'}</td>
-                    <td>PKR ${o.total_price || 0}</td>
-                    <td><select id="status_${o.id}" onchange="updateOrderStat('${o.id}')" style="background:#222;color:white;border-radius:8px;padding:0.3rem;">${['Pending','Confirmed','Shipped','Delivered','Cancelled'].map(s=>`<option ${o.status===s?'selected':''}>${s}</option>`).join('')}</select></td>
-                    <td>${new Date(o.created_at).toLocaleDateString()}</td>
-                    <td><button class="btn-edit" onclick="updateOrderStat('${o.id}')">Save</button></td>
-                </tr>`;
-            }).join('');
-        } catch(e) {
-            console.error("Orders error:", e);
-            document.getElementById('ordersTableBody').innerHTML = '<td><td colspan="8">Error loading orders</td></tr>';
+            
+            let address = o.customer_address || '-';
+            if(address.length > 40) address = address.substring(0, 37) + '...';
+            
+            return `<tr>
+                <td>${o.id.slice(0,8)}</td>
+                <td>${escapeHtml(o.customer_name||'-')}</td>
+                <td>${o.customer_phone||'-'}</td>
+                <td class="address-cell" title="${escapeHtml(o.customer_address||'')}">${escapeHtml(address)}</td>
+                <td class="order-items-list">${itemsHtml || '-'}</td>
+                <td>PKR ${o.total_price || 0}</td>
+                <td><select id="orderSelect_${o.id}" onchange="updateOrderStatFromSelect('${o.id}')" style="background:#222;color:white;border-radius:8px;padding:0.3rem;">${['Pending','Confirmed','Shipped','Delivered','Cancelled'].map(s=>`<option ${o.status===s?'selected':''}>${s}</option>`).join('')}</select></td>
+                <td>${new Date(o.created_at).toLocaleDateString()}</td>
+                <td><button class="btn-edit" onclick="updateOrderStat('${o.id}')">Save</button></td>
+            </tr>`;
+        }).join('');
+    };
+    
+    window.updateOrderStatFromSelect = async function(id) {
+        let select = document.getElementById(`orderSelect_${id}`);
+        if(select) {
+            let status = select.value;
+            await supabase.from('orders').update({ status }).eq('id', id);
+            toast(`Order ${status}`);
+            fetchOrders();
         }
     };
     
-    window.updateOrderStat = async function(id) { 
-        let select = document.getElementById(`status_${id}`);
-        if(!select) return;
-        let status = select.value;
-        let { error } = await supabase.from('orders').update({ status }).eq('id', id); 
-        if(error) toast(error.message, true);
-        else { toast(`Order ${status}`); fetchOrders(); }
+    window.updateOrderStat = async function(id) {
+        let select = document.getElementById(`orderSelect_${id}`);
+        if(select) {
+            let status = select.value;
+            await supabase.from('orders').update({ status }).eq('id', id);
+            toast(`Order ${status}`);
+            fetchOrders();
+        }
     };
     
     function escapeHtml(str) { 
