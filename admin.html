@@ -150,17 +150,7 @@
                 </div>
                 <table class="admin-table">
                     <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Customer</th>
-                            <th>Phone</th>
-                            <th>Address</th>
-                            <th>Fabric (Meters)</th>
-                            <th>Total (PKR)</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                            <th>Update</th>
-                        </tr>
+                        <tr><th>ID</th><th>Customer</th><th>Phone</th><th>Address</th><th>Fabric (Meters)</th><th>Total (PKR)</th><th>Status</th><th>Date</th><th>Update</th></tr>
                     </thead>
                     <tbody id="ordersTableBody"><tr><td colspan="9">Loading orders...</td></tr></tbody>
                 </table>
@@ -189,6 +179,7 @@
                 <input type="file" id="localImageFile" accept="image/*" onchange="previewLocalImage(this)">
                 <div class="preview-box"><img id="localPreview" src="https://placehold.co/100x100/333/FFD700?text=Select+Image"></div>
                 <div class="progress-bar" id="uploadProgressBar"><div class="progress-fill" id="uploadFill"></div></div>
+                <p style="color:#aaa; font-size:0.7rem; margin-top:5px;">Max 2MB | JPG, PNG, GIF</p>
             </div>
         </div>
         <div class="form-group"><label>Fabric Name *</label><input type="text" id="itemName" placeholder="Premium Lawn Fabric"></div>
@@ -230,7 +221,7 @@
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('adminPanel').style.display = 'block';
             document.getElementById('adminNameSpan').innerText = u;
-            initStorageAndLoad();
+            initAndLoad();
         } else { 
             errDiv.innerText = '❌ Invalid credentials'; 
             document.getElementById('adminPass').value = ''; 
@@ -243,60 +234,80 @@
         document.getElementById('loginScreen').style.display = 'flex'; 
     };
 
-    async function initStorageAndLoad() {
-        await ensureBucketExists();
+    async function initAndLoad() {
+        await setupStorage();
         await loadAllAdminData();
     }
 
-    async function ensureBucketExists() {
+    async function setupStorage() {
         try {
-            const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-            if (listError) {
-                console.error("Error listing buckets:", listError);
-                return false;
-            }
+            // Try to create bucket if not exists
+            const { data: buckets } = await supabase.storage.listBuckets();
             const bucketExists = buckets?.some(b => b.name === 'fabric-images');
+            
             if (!bucketExists) {
                 const { error: createError } = await supabase.storage.createBucket('fabric-images', { 
                     public: true,
-                    allowedMimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'],
+                    allowedMimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'],
                     fileSizeLimit: 2097152
                 });
                 if (createError) {
-                    toast("Cannot create storage bucket: " + createError.message, true);
-                    return false;
+                    console.warn("Bucket creation warning:", createError);
+                    toast("Note: Storage bucket needs manual setup in Supabase dashboard", false);
+                } else {
+                    toast("Storage bucket created successfully!", false);
                 }
             }
-            return true;
         } catch(e) {
-            console.error("Storage init error:", e);
-            return false;
+            console.error("Storage setup error:", e);
+            toast("Storage not configured. Images will use URLs only.", true);
         }
     }
 
     async function uploadLocalImage(file) { 
         if (!file) return null; 
+        
         if (file.size > 2 * 1024 * 1024) {
             toast("Image too large! Max 2MB", true);
             return null;
         }
+        
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+        if (!allowedTypes.includes(file.type)) {
+            toast("Only JPG, PNG, GIF images allowed", true);
+            return null;
+        }
+        
         let ext = file.name.split('.').pop(); 
         let fname = `fabrics/${Date.now()}_${Math.random().toString(36).substring(2,10)}.${ext}`; 
         let progDiv = document.getElementById('uploadProgressBar'); 
         let fill = document.getElementById('uploadFill'); 
         if(progDiv) progDiv.style.display = 'block'; 
         fill.style.width = '30%'; 
+        
         try {
-            const { error, data } = await supabase.storage.from('fabric-images').upload(fname, file);
+            const { error, data } = await supabase.storage.from('fabric-images').upload(fname, file, {
+                cacheControl: '3600',
+                upsert: true
+            }); 
             fill.style.width = '100%'; 
             setTimeout(()=>{ if(progDiv) progDiv.style.display = 'none'; fill.style.width = '0%'; }, 800); 
+            
             if(error) { 
-                toast('Upload failed: ' + error.message, true); 
+                console.error("Upload error:", error);
+                if(error.message.includes("row-level security") || error.message.includes("permission")) {
+                    toast("Storage permission error. Please run SQL in Supabase SQL Editor:\n\nCREATE POLICY \"Give public access\" ON storage.objects FOR ALL USING (true);", true);
+                } else {
+                    toast('Upload failed: ' + error.message, true);
+                }
                 return null; 
             } 
+            
             const { data: { publicUrl } } = supabase.storage.from('fabric-images').getPublicUrl(fname); 
+            toast("Image uploaded successfully!", false);
             return publicUrl; 
         } catch(err) {
+            console.error("Upload exception:", err);
             toast('Upload error: ' + err.message, true);
             return null;
         }
@@ -432,8 +443,8 @@
                 let uploaded = await uploadLocalImage(localFileToUpload); 
                 if(uploaded) finalImageUrl = uploaded; 
                 else { 
-                    toast('Image upload failed', true); 
-                    return; 
+                    toast('Image upload failed. Using URL option instead.', true); 
+                    finalImageUrl = document.getElementById('imageUrlInput').value.trim();
                 } 
             } else { 
                 finalImageUrl = document.getElementById('imageUrlInput').value.trim(); 
@@ -480,14 +491,12 @@
         localFileToUpload = null; 
     };
 
-    // DATE FILTER FUNCTIONS
     function getDateRange(preset) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         
         switch(preset) {
-            case 'today':
-                return { start: today, end: new Date(today.getTime() + 86400000) };
+            case 'today': return { start: today, end: new Date(today.getTime() + 86400000) };
             case 'yesterday':
                 let yesterday = new Date(today);
                 yesterday.setDate(yesterday.getDate() - 1);
@@ -504,8 +513,7 @@
                 let lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
                 lastMonthEnd.setHours(23, 59, 59, 999);
                 return { start: lastMonthStart, end: lastMonthEnd };
-            default:
-                return null;
+            default: return null;
         }
     }
 
@@ -514,10 +522,8 @@
         if(preset) {
             let range = getDateRange(preset);
             if(range) {
-                let startStr = range.start.toISOString().split('T')[0];
-                let endStr = range.end.toISOString().split('T')[0];
                 document.getElementById('orderFilterDate').value = '';
-                currentDateFilter = { start: startStr, end: endStr };
+                currentDateFilter = { start: range.start.toISOString().split('T')[0], end: range.end.toISOString().split('T')[0] };
                 fetchOrders();
             }
         } else {
@@ -530,11 +536,8 @@
     window.applyDateFilter = function() {
         let date = document.getElementById('orderFilterDate').value;
         document.getElementById('datePreset').value = '';
-        if(date) {
-            currentDateFilter = { start: date, end: date };
-        } else {
-            currentDateFilter = "";
-        }
+        if(date) currentDateFilter = { start: date, end: date };
+        else currentDateFilter = "";
         fetchOrders();
     };
 
@@ -545,7 +548,6 @@
         fetchOrders();
     };
 
-    // ORDERS WITH ADDRESS COLUMN AND DATE FILTER
     window.fetchOrders = async function() {
         let q = supabase.from('orders').select('*').order('created_at', { ascending: false });
         
@@ -553,16 +555,12 @@
             let startDate = currentDateFilter.start + 'T00:00:00';
             let endDate = currentDateFilter.end + 'T23:59:59';
             q = q.gte('created_at', startDate).lte('created_at', endDate);
-        } else if(currentDateFilter && typeof currentDateFilter === 'string') {
-            let startDate = currentDateFilter + 'T00:00:00';
-            let endDate = currentDateFilter + 'T23:59:59';
-            q = q.gte('created_at', startDate).lte('created_at', endDate);
         }
         
         let { data } = await q;
         let tbody = document.getElementById('ordersTableBody');
         if(!data || !data.length) { 
-            tbody.innerHTML = '<tr><td colspan="9">No fabric orders found for selected date range</td></tr>'; 
+            tbody.innerHTML = '｜｜DSML｜｜<td colspan="9">No fabric orders found for selected date range</td></tr>'; 
             return; 
         }
         
@@ -572,39 +570,26 @@
                 itemsHtml = o.items_ordered.map(item => {
                     let meterInfo = '';
                     if(item.meters) meterInfo = `<span class="meter-badge">📏 ${item.meters} meters</span>`;
-                    else if(item.size && item.category === 'Fabric') meterInfo = `<span class="meter-badge">📏 ${item.size} m</span>`;
+                    else if(item.size) meterInfo = `<span class="meter-badge">📏 ${item.size} m</span>`;
                     return `<div class="order-item-row">${escapeHtml(item.name || 'Fabric')} ×${item.qty || 1} ${meterInfo}</div>`;
                 }).join('');
-            } else if(o.items_ordered && typeof o.items_ordered === 'object') {
-                let meters = o.items_ordered.meters || '';
-                itemsHtml = `<div class="order-item-row">${escapeHtml(o.items_ordered.name || 'Fabric')} ${meters ? `(${meters}m)` : ''}</div>`;
             }
             
             let address = o.customer_address || '-';
-            if(address.length > 40) address = address.substring(0, 37) + '...';
+            let shortAddress = address.length > 35 ? address.substring(0, 32) + '...' : address;
             
             return `<tr>
                 <td>${o.id.slice(0,8)}</td>
                 <td>${escapeHtml(o.customer_name||'-')}</td>
                 <td>${o.customer_phone||'-'}</td>
-                <td class="address-cell" title="${escapeHtml(o.customer_address||'')}">${escapeHtml(address)}</td>
+                <td class="address-cell" title="${escapeHtml(o.customer_address||'')}">${escapeHtml(shortAddress)}</td>
                 <td class="order-items-list">${itemsHtml || '-'}</td>
                 <td>PKR ${o.total_price || 0}</td>
-                <td><select id="orderSelect_${o.id}" onchange="updateOrderStatFromSelect('${o.id}')" style="background:#222;color:white;border-radius:8px;padding:0.3rem;">${['Pending','Confirmed','Shipped','Delivered','Cancelled'].map(s=>`<option ${o.status===s?'selected':''}>${s}</option>`).join('')}</select></td>
+                <td><select id="orderSelect_${o.id}" onchange="updateOrderStat('${o.id}')" style="background:#222;color:white;border-radius:8px;padding:0.3rem;">${['Pending','Confirmed','Shipped','Delivered','Cancelled'].map(s=>`<option ${o.status===s?'selected':''}>${s}</option>`).join('')}</select></td>
                 <td>${new Date(o.created_at).toLocaleDateString()}</td>
                 <td><button class="btn-edit" onclick="updateOrderStat('${o.id}')">Save</button></td>
             </tr>`;
         }).join('');
-    };
-    
-    window.updateOrderStatFromSelect = async function(id) {
-        let select = document.getElementById(`orderSelect_${id}`);
-        if(select) {
-            let status = select.value;
-            await supabase.from('orders').update({ status }).eq('id', id);
-            toast(`Order ${status}`);
-            fetchOrders();
-        }
     };
     
     window.updateOrderStat = async function(id) {
