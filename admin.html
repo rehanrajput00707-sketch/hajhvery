@@ -143,20 +143,14 @@
                         <option value="yesterday">Yesterday</option>
                         <option value="last7">Last 7 Days</option>
                         <option value="thisMonth">This Month</option>
-                        <option value="lastMonth">Last Month</option>
                     </select>
                     <button class="refresh-btn" onclick="fetchOrders()"><i class="fas fa-sync-alt"></i> Refresh</button>
                     <button class="refresh-btn" onclick="clearDateFilter()" style="background:#333;"><i class="fas fa-times"></i> Clear Filter</button>
                 </div>
                 <table class="admin-table">
-                    <thead>
-                        <tr><th>ID</th><th>Customer</th><th>Phone</th><th>Address</th><th>Fabric (Meters)</th><th>Total (PKR)</th><th>Status</th><th>Date</th><th>Update</th></tr>
-                    </thead>
+                    <thead><tr><th>ID</th><th>Customer</th><th>Phone</th><th>Address</th><th>Fabric (Meters)</th><th>Total (PKR)</th><th>Status</th><th>Date</th><th>Update</th></tr></thead>
                     <tbody id="ordersTableBody"><tr><td colspan="9">Loading orders...</td></tr></tbody>
                 </table>
-                <div style="margin-top: 1rem; text-align: center; color: #aaa; font-size: 0.8rem;">
-                    <i class="fas fa-database"></i> Orders are automatically saved. Use date filters to view old orders.
-                </div>
             </div>
         </div>
     </div>
@@ -241,7 +235,6 @@
 
     async function setupStorage() {
         try {
-            // Try to create bucket if not exists
             const { data: buckets } = await supabase.storage.listBuckets();
             const bucketExists = buckets?.some(b => b.name === 'fabric-images');
             
@@ -253,14 +246,12 @@
                 });
                 if (createError) {
                     console.warn("Bucket creation warning:", createError);
-                    toast("Note: Storage bucket needs manual setup in Supabase dashboard", false);
                 } else {
-                    toast("Storage bucket created successfully!", false);
+                    toast("Storage bucket ready!", false);
                 }
             }
         } catch(e) {
             console.error("Storage setup error:", e);
-            toast("Storage not configured. Images will use URLs only.", true);
         }
     }
 
@@ -272,12 +263,6 @@
             return null;
         }
         
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
-        if (!allowedTypes.includes(file.type)) {
-            toast("Only JPG, PNG, GIF images allowed", true);
-            return null;
-        }
-        
         let ext = file.name.split('.').pop(); 
         let fname = `fabrics/${Date.now()}_${Math.random().toString(36).substring(2,10)}.${ext}`; 
         let progDiv = document.getElementById('uploadProgressBar'); 
@@ -286,20 +271,13 @@
         fill.style.width = '30%'; 
         
         try {
-            const { error, data } = await supabase.storage.from('fabric-images').upload(fname, file, {
-                cacheControl: '3600',
-                upsert: true
-            }); 
+            const { error, data } = await supabase.storage.from('fabric-images').upload(fname, file);
             fill.style.width = '100%'; 
             setTimeout(()=>{ if(progDiv) progDiv.style.display = 'none'; fill.style.width = '0%'; }, 800); 
             
             if(error) { 
                 console.error("Upload error:", error);
-                if(error.message.includes("row-level security") || error.message.includes("permission")) {
-                    toast("Storage permission error. Please run SQL in Supabase SQL Editor:\n\nCREATE POLICY \"Give public access\" ON storage.objects FOR ALL USING (true);", true);
-                } else {
-                    toast('Upload failed: ' + error.message, true);
-                }
+                toast('Upload failed: ' + error.message, true); 
                 return null; 
             } 
             
@@ -357,7 +335,7 @@
             allMenu = data||[]; 
             renderMenuTable(); 
             renderCategoryFilters();
-        } else toast('menu error',true); 
+        } else toast('menu error: ' + error.message, true); 
     }
     
     function renderMenuTable() { 
@@ -450,15 +428,17 @@
                 finalImageUrl = document.getElementById('imageUrlInput').value.trim(); 
             } 
         } 
+        
+        // NO points_reward field - removed completely
         let payload = { 
             name, 
             description: document.getElementById('itemDesc').value, 
             price, 
             category: document.getElementById('itemCategory').value, 
-            points_reward: 0,
             is_available: document.getElementById('itemAvailable').checked, 
             image_url: finalImageUrl || null 
         }; 
+        
         let result; 
         if(id) result = await supabase.from('menu_items').update(payload).eq('id', id); 
         else result = await supabase.from('menu_items').insert([payload]); 
@@ -494,7 +474,6 @@
     function getDateRange(preset) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
         switch(preset) {
             case 'today': return { start: today, end: new Date(today.getTime() + 86400000) };
             case 'yesterday':
@@ -508,11 +487,6 @@
             case 'thisMonth':
                 let startMonth = new Date(today.getFullYear(), today.getMonth(), 1);
                 return { start: startMonth, end: new Date(today.getTime() + 86400000) };
-            case 'lastMonth':
-                let lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-                let lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
-                lastMonthEnd.setHours(23, 59, 59, 999);
-                return { start: lastMonthStart, end: lastMonthEnd };
             default: return null;
         }
     }
@@ -560,7 +534,7 @@
         let { data } = await q;
         let tbody = document.getElementById('ordersTableBody');
         if(!data || !data.length) { 
-            tbody.innerHTML = '｜｜DSML｜｜<td colspan="9">No fabric orders found for selected date range</td></tr>'; 
+            tbody.innerHTML = '<tr><td colspan="9">No fabric orders found</td></tr>'; 
             return; 
         }
         

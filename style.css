@@ -163,9 +163,8 @@ h2 {
 }
 
 .hero-image img {
-    width: 100%;
-    border-radius: 20px;
-    box-shadow: 0 20px 30px rgba(0,0,0,0.5);
+    width: 111%;
+    max-height: fit-content;
 }
 
 /* Top Picks Section */
